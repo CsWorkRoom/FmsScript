@@ -1,0 +1,150 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{52520A62-C924-4126-A70B-C7594984E531}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Easyman.Service</RootNamespace>
+    <AssemblyName>Easyman.Service</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
+      <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
+    </Reference>
+    <Reference Include="IBM.Data.DB2, Version=9.7.4.4, Culture=neutral, PublicKeyToken=7c307b91aa13d208, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DBHelper\IBM.Data.DB2.dll</HintPath>
+    </Reference>
+    <Reference Include="IBM.Data.DB2.Entity, Version=9.7.4.4, Culture=neutral, PublicKeyToken=7c307b91aa13d208, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>DBHelper\IBM.Data.DB2.Entity.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib, Version=0.86.5.0, Culture=neutral, PublicKeyToken=9dea7c6e17aa31ff, processorArchitecture=MSIL">
+      <HintPath>..\packages\ICSharpCode.SharpZipLib.Patched.0.86.5\lib\net20\ICSharpCode.SharpZipLib.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.QualityTools.Testing.Fakes, Version=12.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="MySql.Data">
+      <HintPath>..\packages\MySql\MySql.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.10.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Oracle.ManagedDataAccess, Version=4.121.1.0, Culture=neutral, PublicKeyToken=89b483f429c47342, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Oracle.ManagedDataAccess.12.1.24160719\lib\net40\Oracle.ManagedDataAccess.dll</HintPath>
+    </Reference>
+    <Reference Include="Oracle.ManagedDataAccess.EntityFramework">
+      <HintPath>..\packages\Oracle.ManagedDataAccess.EntityFramework.12.1.2400\lib\net45\Oracle.ManagedDataAccess.EntityFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Runtime.Serialization" />
+    <Reference Include="System.Security" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Common\Fun.cs" />
+    <Compile Include="Common\ZipHelper.cs" />
+    <Compile Include="DBEntities.cs" />
+    <Compile Include="DBHelper\DB2Helper.cs" />
+    <Compile Include="DBHelper\DB2Helper_Ext.cs" />
+    <Compile Include="DBHelper\OracleHelper.cs" />
+    <Compile Include="DBHelper\OracleHelper_Ext.cs" />
+    <Compile Include="DBHelper\SqlHelper.cs" />
+    <Compile Include="Domain\DBServer.cs" />
+    <Compile Include="Domain\Entity\EM_ANALYSIS.cs" />
+    <Compile Include="Domain\Entity\EM_CONNECT_LINE.cs" />
+    <Compile Include="Domain\Entity\EM_CONNECT_LINE_FORCASE.cs" />
+    <Compile Include="Domain\Entity\EM_DB_SERVER.cs" />
+    <Compile Include="Domain\Entity\EM_DB_TAG.cs" />
+    <Compile Include="Domain\Entity\EM_HAND_RECORD.cs" />
+    <Compile Include="Domain\Entity\EM_ICON.cs" />
+    <Compile Include="Domain\Entity\EM_MODULE.cs" />
+    <Compile Include="Domain\Entity\EM_MODULE_EVENT.cs" />
+    <Compile Include="Domain\Entity\EM_NODE_POSITION.cs" />
+    <Compile Include="Domain\Entity\EM_NODE_POSITION_FORCASE.cs" />
+    <Compile Include="Domain\Entity\EM_ROLE_MODULE.cs" />
+    <Compile Include="Domain\Entity\EM_ROLE_MODULE_EVENT.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_CASE.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_CASE_LOG.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_FUNCTION.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_NODE.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_NODE_CASE.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_NODE_CASE_LOG.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_NODE_FORCASE.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_NODE_LOG.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_NODE_TYPE.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_REF_NODE.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_REF_NODE_FORCASE.cs" />
+    <Compile Include="Domain\Entity\EM_SCRIPT_TYPE.cs" />
+    <Compile Include="Domain\ErrorInfo.cs" />
+    <Compile Include="Domain\PubEnum.cs" />
+    <Compile Include="Domain\ScriptNode.cs" />
+    <Compile Include="Domain\TableFiled.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Server\ExtScript.cs" />
+    <Compile Include="Server\ExtScriptHelper.cs" />
+    <Compile Include="Server\ScriptFunManager.cs" />
+    <Compile Include="Server\ScriptManager.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <Fakes Include="Fakes\Newtonsoft.Json.fakes" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Easyman.Librarys\Easyman.Librarys.csproj">
+      <Project>{3823BE52-C28D-4BB6-BC1D-9844C3929F92}</Project>
+      <Name>Easyman.Librarys</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="DBHelper\IBM.Data.DB2.dll" />
+    <Content Include="DBHelper\IBM.Data.DB2.Entity.dll" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

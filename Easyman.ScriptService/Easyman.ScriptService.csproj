@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{EB5642F4-AACE-497B-B371-A2A637DAF801}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Easyman.ScriptService</RootNamespace>
+    <AssemblyName>Easyman.ScriptService</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.ServiceProcess" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="BLL\EM_CONNECT_LINE.cs" />
+    <Compile Include="BLL\EM_CONNECT_LINE_FORCASE.cs" />
+    <Compile Include="BLL\EM_DB_SERVER.cs" />
+    <Compile Include="BLL\EM_DB_TAG.cs" />
+    <Compile Include="BLL\EM_HAND_RECORD.cs" />
+    <Compile Include="BLL\EM_NODE_POSITION.cs" />
+    <Compile Include="BLL\EM_NODE_POSITION_FORCASE.cs" />
+    <Compile Include="BLL\EM_SCRIPT.cs" />
+    <Compile Include="BLL\EM_SCRIPT_CASE.cs" />
+    <Compile Include="BLL\EM_SCRIPT_CASE_LOG.cs" />
+    <Compile Include="BLL\EM_SCRIPT_FUNCTION.cs" />
+    <Compile Include="BLL\EM_SCRIPT_NODE.cs" />
+    <Compile Include="BLL\EM_SCRIPT_NODE_CASE.cs" />
+    <Compile Include="BLL\EM_SCRIPT_NODE_CASE_LOG.cs" />
+    <Compile Include="BLL\EM_SCRIPT_NODE_FORCASE.cs" />
+    <Compile Include="BLL\EM_SCRIPT_NODE_LOG.cs" />
+    <Compile Include="BLL\EM_SCRIPT_NODE_TYPE.cs" />
+    <Compile Include="BLL\EM_SCRIPT_REF_NODE.cs" />
+    <Compile Include="BLL\EM_SCRIPT_REF_NODE_FORCASE.cs" />
+    <Compile Include="BLL\EM_SCRIPT_TYPE.cs" />
+    <Compile Include="EasymanScriptService.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="EasymanScriptService.Designer.cs">
+      <DependentUpon>EasymanScriptService.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Enums.cs" />
+    <Compile Include="ErrorInfo.cs" />
+    <Compile Include="Main.cs" />
+    <Compile Include="Script\Base.cs" />
+    <Compile Include="Script\Test.cs" />
+    <Compile Include="Script\Execute.cs" />
+    <Compile Include="Script\Transfer.cs" />
+    <Compile Include="Task\Flow.cs" />
+    <Compile Include="Task\Hand.cs" />
+    <Compile Include="Task\Node.cs" />
+    <Compile Include="Task\Scanner.cs" />
+    <Compile Include="TestForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="TestForm.Designer.cs">
+      <DependentUpon>TestForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="ProjectInstaller.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ProjectInstaller.Designer.cs">
+      <DependentUpon>ProjectInstaller.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="TestForm.resx">
+      <DependentUpon>TestForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ProjectInstaller.resx">
+      <DependentUpon>ProjectInstaller.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Easyman.Librarys\Easyman.Librarys.csproj">
+      <Project>{3823be52-c28d-4bb6-bc1d-9844c3929f92}</Project>
+      <Name>Easyman.Librarys</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="readme.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

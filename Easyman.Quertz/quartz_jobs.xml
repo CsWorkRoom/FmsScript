@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- This file contains job definitions in schema version 2.0 format -->
+
+<job-scheduling-data xmlns="http://quartznet.sourceforge.net/JobSchedulingData" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0">
+
+  <processing-directives>
+    <overwrite-existing-data>true</overwrite-existing-data>
+  </processing-directives>
+
+  <schedule>
+
+    <!--AntoJob为脚本流生成job和trigger 任务配置-->
+    <job>
+      <name>AntoJob</name>
+      <group>Anto</group>
+      <description>为脚本流生成job和trigger</description>
+      <job-type>Easyman.Quartz.QuartzJobs.AntoJob,Easyman.Quartz</job-type>
+      <durable>true</durable>
+      <recover>false</recover>
+    </job>
+    <trigger>
+      <cron>
+        <name>AntoJobTrigger</name>
+        <group>Anto</group>
+        <job-name>AntoJob</job-name>
+        <job-group>Anto</job-group>
+        <!--<start-time>2015-01-22T00:00:00+08:00</start-time>-->
+        <cron-expression>0/5 * * * * ?</cron-expression>
+      </cron>
+    </trigger>
+
+    <!--DealHandJob处理手工任务 任务配置-->
+    <job>
+      <name>DealHandJob</name>
+      <group>DealHand</group>
+      <description>处理手工任务</description>
+      <job-type>Easyman.Quartz.QuartzJobs.DealHandJob,Easyman.Quartz</job-type>
+      <durable>true</durable>
+      <recover>false</recover>
+    </job>
+    <trigger>
+      <cron>
+        <name>DealHandJobTrigger</name>
+        <group>DealHand</group>
+        <job-name>DealHandJob</job-name>
+        <job-group>DealHand</job-group>
+        <!--<start-time>2015-01-22T00:00:00+08:00</start-time>-->
+        <cron-expression>0/3 * * * * ?</cron-expression>
+      </cron>
+    </trigger>
+
+    <!--ScriptQuertzJob处理节点实例任务 任务配置-->
+    <job>
+      <name>ScriptQuertzJob</name>
+      <group>ScriptQuertz</group>
+      <description>节点实例任务</description>
+      <job-type>Easyman.Quartz.QuartzJobs.ScriptQuertzJob,Easyman.Quartz</job-type>
+      <durable>true</durable>
+      <recover>false</recover>
+    </job>
+    <trigger>
+      <cron>
+        <name>ScriptQuertzJobTrigger</name>
+        <group>ScriptQuertz</group>
+        <job-name>ScriptQuertzJob</job-name>
+        <job-group>ScriptQuertz</job-group>
+        <!--<start-time>2015-01-22T00:00:00+08:00</start-time>-->
+        <cron-expression>0/3 * * * * ?</cron-expression>
+      </cron>
+    </trigger>
+    
+  </schedule>
+</job-scheduling-data>
