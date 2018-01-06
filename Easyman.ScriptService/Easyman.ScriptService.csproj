@@ -113,13 +113,13 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="readme.txt" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Easyman.Librarys\Easyman.Librarys.csproj">
       <Project>{3823be52-c28d-4bb6-bc1d-9844c3929f92}</Project>
       <Name>Easyman.Librarys</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="readme.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

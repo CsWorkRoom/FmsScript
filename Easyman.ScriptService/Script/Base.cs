@@ -10,9 +10,10 @@ using System.IO;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Threading;
-using Easyman.Librarys.DBHelper.Providers;
+using System.Net;
+using System.Diagnostics;
+using Easyman.Librarys;
 using Easyman.Librarys.ApiRequest;
-using Easyman.Common;
 
 namespace Easyman.ScriptService.Script
 {
@@ -52,6 +53,7 @@ namespace Easyman.ScriptService.Script
             _scriptNodeCaseID = scriptNodeCaseID;
         }
 
+
         /// <summary>
         /// 获取错误信息
         /// </summary>
@@ -70,7 +72,7 @@ namespace Easyman.ScriptService.Script
         protected void WriteErrorMessage(string errorMessage, int logLevel = 3, string sql = "")
         {
             _isError = true;
-            _errorMessage = errorMessage+"\r\n本节点中的后续代码，除了写日志之外，将不再执行。";
+            _errorMessage = errorMessage + "\r\n本节点中的后续代码，除了写日志之外，将不再执行。";
             log(errorMessage, logLevel, sql);
         }
 
@@ -1099,7 +1101,7 @@ namespace Easyman.ScriptService.Script
                 //避免永远等待
                 DateTime waiteEnd = DateTime.Now.AddMinutes(10);
                 //等待执行完成
-                while (_queueAsyncLoadTask.Count > 0 && _isAsyncLoadWriteEnd == false && DateTime.Now<waiteEnd)
+                while (_queueAsyncLoadTask.Count > 0 && _isAsyncLoadWriteEnd == false && DateTime.Now < waiteEnd)
                 {
                     Thread.Sleep(100);
                     continue;
@@ -1136,7 +1138,7 @@ namespace Easyman.ScriptService.Script
             /// <param name="destTableName"></param>
             /// <param name="dt"></param>
             /// <param name="pageIndex"></param>
-            public AsyncLoadTask(BLL.EM_DB_SERVER.Entity destDBServer, string destTableName,  DataTable dt, int pageIndex)
+            public AsyncLoadTask(BLL.EM_DB_SERVER.Entity destDBServer, string destTableName, DataTable dt, int pageIndex)
             {
                 DestTableName = destTableName;
                 DestDBServer = destDBServer;
@@ -1261,7 +1263,7 @@ namespace Easyman.ScriptService.Script
             {
                 using (BDBHelper dbHelper = new BDBHelper(_dbServer.DB_TYPE, _dbServer.IP, _dbServer.PORT, _dbServer.USER, _dbServer.PASSWORD, _dbServer.DATA_CASE, _dbServer.DATA_CASE))
                 {
-                    ret =dbHelper.CreateTableFromDataTable(tableName, dt);
+                    ret = dbHelper.CreateTableFromDataTable(tableName, dt);
                 }
             }
             catch (Exception ex)
@@ -1384,28 +1386,65 @@ namespace Easyman.ScriptService.Script
 
         #endregion
 
-        /// <summary>
-        /// 复制文件
-        /// </summary>
-        public void CopyFileToServer()
+        #region 文件监控
+
+        public void MonitorStart(string ip, string folderName)
         {
-            log("开始获取监控文件");
 
-            string sql = string.Format(@"SELECT ID
-                      FROM(SELECT ID
-                                FROM FM_MONIT_FILE
-                               WHERE COPY_STATUS = 0 OR COPY_STATUS = 3
-                            ORDER BY ID)
-                     WHERE ROWNUM = 1");
-            BDBHelper dbop = new BDBHelper();
-            object obj= dbop.ExecuteScalar(sql);
-            log("获取到的监控文件编号【" + obj + "】");
-
-            string api = Librarys.Config.BConfig.GetConfigToString("MonitCopyFileIP");
-            log("开始复制文件，编号【" + obj + "】");
-            //开启一个文件的复制
-            string result = Request.GetHttp(api, "monitFileId="+ obj);
-            log(result, "根据该sql取一条记录去监控" + sql);
+            
+            log(string.Format(@"开启对{0}的{1}文件夹监控...",ip,folderName));
+            string url = Librarys.Config.BConfig.GetConfigToString("MonitServiceIP");
+            string postData = string.Format("ip={0}&folderName={1}&scriptNodeCaseId={2}", ip, folderName, _scriptNodeCaseID.ToString());
+            var mess=Request.GetHttp(url, postData);
+            log(string.Format(@"对{0}的{1}文件夹监控结果:{2}", ip, folderName,mess));
         }
+        #endregion
+
+        #region 数据库操作
+
+        public bool DataBaseCmd(string cmdStr)
+        {
+            try
+            {
+                log(string.Format(@"装载命令:{0}", cmdStr));
+                Process p = new Process();
+                p.StartInfo.FileName = "cmd.exe"; //bat文件路径        
+
+                p.StartInfo.UseShellExecute = false;
+                p.StartInfo.CreateNoWindow = true;// 不创建新窗口 
+                p.StartInfo.RedirectStandardInput = true;// 重定向输入
+                p.StartInfo.RedirectStandardOutput = true;// 重定向标准输出  
+                p.Start();
+                log(string.Format(@"执行命令", cmdStr));
+                //如果调用程序路径中有空格时，cmd命令执行失败，可以用双引号括起来 ，在这里两个引号表示一个引号（转义）
+                string str = string.Format(@"{0} {1}", cmdStr, "&exit");
+
+                p.StandardInput.WriteLine(str);
+                StreamReader reader = p.StandardOutput;//截取输出流
+
+                string line = reader.ReadLine();//每次读取一行
+                StringBuilder logBat = new StringBuilder();
+                while (!reader.EndOfStream)
+                {
+                    line = reader.ReadLine();
+                    if (line != "")
+                    {
+                        logBat.AppendLine(line);
+                    }
+
+                }
+
+                p.WaitForExit();//启用则以同步方式执行命令
+                p.Close();
+                log("执行结果:"+logBat.ToString());
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        #endregion
+
     }
 }
