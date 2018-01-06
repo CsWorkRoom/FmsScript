@@ -10,6 +10,9 @@ using System.IO;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Threading;
+using Easyman.Librarys.DBHelper.Providers;
+using Easyman.Librarys.ApiRequest;
+using Easyman.Common;
 
 namespace Easyman.ScriptService.Script
 {
@@ -1381,5 +1384,28 @@ namespace Easyman.ScriptService.Script
 
         #endregion
 
+        /// <summary>
+        /// 复制文件
+        /// </summary>
+        public void CopyFileToServer()
+        {
+            log("开始获取监控文件");
+
+            string sql = string.Format(@"SELECT ID
+                      FROM(SELECT ID
+                                FROM FM_MONIT_FILE
+                               WHERE COPY_STATUS = 0 OR COPY_STATUS = 3
+                            ORDER BY ID)
+                     WHERE ROWNUM = 1");
+            BDBHelper dbop = new BDBHelper();
+            object obj= dbop.ExecuteScalar(sql);
+            log("获取到的监控文件编号【" + obj + "】");
+
+            string api = Librarys.Config.BConfig.GetConfigToString("MonitCopyFileIP");
+            log("开始复制文件，编号【" + obj + "】");
+            //开启一个文件的复制
+            string result = Request.GetHttp(api, "monitFileId="+ obj);
+            log(result, "根据该sql取一条记录去监控" + sql);
+        }
     }
 }

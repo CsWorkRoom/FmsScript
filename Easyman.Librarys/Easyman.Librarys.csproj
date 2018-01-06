@@ -38,6 +38,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Compress\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>HttpWebRequest\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Oracle.ManagedDataAccess, Version=4.121.1.0, Culture=neutral, PublicKeyToken=89b483f429c47342, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>DBHelper\Providers\Oracle.ManagedDataAccess.dll</HintPath>
@@ -47,6 +50,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -66,6 +70,7 @@
     <Compile Include="DBHelper\DBOperator.cs" />
     <Compile Include="DBHelper\Providers\IBMDB2.cs" />
     <Compile Include="DBHelper\Providers\Oracle.cs" />
+    <Compile Include="HttpWebRequest\JSON.cs" />
     <Compile Include="HttpWebRequest\Request.cs" />
     <Compile Include="Log\BLog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
