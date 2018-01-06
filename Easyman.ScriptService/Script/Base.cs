@@ -1441,6 +1441,7 @@ namespace Easyman.ScriptService.Script
             }
             catch (Exception ex)
             {
+                log("执行命令异常:" + ex.Message);
                 return false;
             }
         }
