@@ -15,6 +15,8 @@ namespace Easyman.ScriptService
         /// </summary>
         static void Main()
         {
+            //Script.Base bs = new Script.Base();
+            //bs.CopyFileToServer();
             //Request.PostHttp("http://localhost:6235/File/GetFileListByFolder", "folderId=21", "application/x-www-form-urlencoded");
             //Request.GetHttp("http://localhost:6235/api/services/api/MonitFile/UpFileByMonitFile", "monitFileId=53");
 #if DEBUG
