@@ -2,10 +2,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Easyman.Quartz", "Easyman.Quertz\Easyman.Quartz.csproj", "{2C8EF700-DB89-41D7-BA97-D4646A9DC227}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Easyman.Service", "Easyman.Service\Easyman.Service.csproj", "{52520A62-C924-4126-A70B-C7594984E531}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Easyman.TestForm", "Easyman.TestForm\Easyman.TestForm.csproj", "{9236097B-734F-4A92-8F11-9A2E29CC6FD0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Easyman.ScriptService", "Easyman.ScriptService\Easyman.ScriptService.csproj", "{EB5642F4-AACE-497B-B371-A2A637DAF801}"
@@ -18,14 +14,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2C8EF700-DB89-41D7-BA97-D4646A9DC227}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2C8EF700-DB89-41D7-BA97-D4646A9DC227}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2C8EF700-DB89-41D7-BA97-D4646A9DC227}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2C8EF700-DB89-41D7-BA97-D4646A9DC227}.Release|Any CPU.Build.0 = Release|Any CPU
-		{52520A62-C924-4126-A70B-C7594984E531}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{52520A62-C924-4126-A70B-C7594984E531}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{52520A62-C924-4126-A70B-C7594984E531}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{52520A62-C924-4126-A70B-C7594984E531}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9236097B-734F-4A92-8F11-9A2E29CC6FD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9236097B-734F-4A92-8F11-9A2E29CC6FD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9236097B-734F-4A92-8F11-9A2E29CC6FD0}.Release|Any CPU.ActiveCfg = Release|Any CPU

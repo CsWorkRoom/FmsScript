@@ -68,16 +68,16 @@ namespace Easyman.TestForm
 
         private void button1_Click(object sender, EventArgs e)
         {
-            Easyman.Service.Server.ExtScriptHelper helper = new Service.Server.ExtScriptHelper();
-            helper.dbServer = new Service.Domain.DBServer();
-            helper.dbServer.ID = 1;
-            helper.dbServer.BYNAME = "139远程库";
-            helper.dbServer.DB_TYPE = "ORACLE";
-            helper.dbServer.ConnectionStr = string.Format("Data Source={0}:{1}/{2};User Id={3};Password={4};Connection Timeout =3600", "139.196.212.68", 1521, "ORCL", "C##ABPBASE", "C##ABPBASE");
+            //Easyman.Service.Server.ExtScriptHelper helper = new Service.Server.ExtScriptHelper();
+            //helper.dbServer = new Service.Domain.DBServer();
+            //helper.dbServer.ID = 1;
+            //helper.dbServer.BYNAME = "139远程库";
+            //helper.dbServer.DB_TYPE = "ORACLE";
+            //helper.dbServer.ConnectionStr = string.Format("Data Source={0}:{1}/{2};User Id={3};Password={4};Connection Timeout =3600", "139.196.212.68", 1521, "ORCL", "C##ABPBASE", "C##ABPBASE");
 
-            string sql = "CREATE TABLE TB_222 (ID NUMBER(10))";
-            int i = helper.execute(sql);
-            MessageBox.Show("aaa :" + i);
+            //string sql = "CREATE TABLE TB_222 (ID NUMBER(10))";
+            //int i = helper.execute(sql);
+            //MessageBox.Show("aaa :" + i);
         }
 
         /// <summary>

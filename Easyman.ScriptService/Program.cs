@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Easyman.Librarys.ApiRequest;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceProcess;
@@ -14,6 +15,8 @@ namespace Easyman.ScriptService
         /// </summary>
         static void Main()
         {
+            //Request.PostHttp("http://localhost:6235/File/GetFileListByFolder", "folderId=21", "application/x-www-form-urlencoded");
+            //Request.GetHttp("http://localhost:6235/api/services/api/MonitFile/UpFileByMonitFile", "monitFileId=53");
 #if DEBUG
             System.Windows.Forms.Application.EnableVisualStyles();
             System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
@@ -26,6 +29,11 @@ namespace Easyman.ScriptService
             };
             ServiceBase.Run(ServicesToRun);
 #endif
+        }
+
+        static void testapi()
+        {
+            Request.GetHttp("http://localhost:6235/api/services/api/MonitFile/UpFileByMonitFile", "monitFileId=53");
         }
     }
 }

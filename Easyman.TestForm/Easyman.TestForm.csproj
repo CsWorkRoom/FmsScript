@@ -99,10 +99,6 @@
       <Project>{eb5642f4-aace-497b-b371-a2a637daf801}</Project>
       <Name>Easyman.ScriptService</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Easyman.Service\Easyman.Service.csproj">
-      <Project>{52520a62-c924-4126-a70b-c7594984e531}</Project>
-      <Name>Easyman.Service</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
