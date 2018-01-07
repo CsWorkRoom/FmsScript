@@ -120,6 +120,8 @@ namespace Easyman.ScriptService.Task
                 {
                     ErrorInfo err = new ErrorInfo();
                     string code = Script.Transfer.Trans(_nodeCaseEntity, ref err);
+                    BLL.EM_SCRIPT_NODE_CASE.Instance.SaveNodeCaseCompile(_nodeCaseEntity.ID, code);//保存编译的脚本
+
                     if (err.IsError == true)
                     {
                         WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】生成脚本代码失败，错误信息为：\r\n{4}", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID, err.Message), code);

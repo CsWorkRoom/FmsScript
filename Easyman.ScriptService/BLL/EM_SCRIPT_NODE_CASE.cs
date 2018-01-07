@@ -44,6 +44,7 @@ namespace Easyman.ScriptService.BLL
             public Nullable<long> DB_SERVER_ID { get; set; }
             public Nullable<short> SCRIPT_MODEL { get; set; }
             public string CONTENT { get; set; }
+            public string COMPILE_CONTENT { get; set; }
             public string REMARK { get; set; }
             public string E_TABLE_NAME { get; set; }
             public string C_TABLE_NAME { get; set; }
@@ -163,6 +164,19 @@ namespace Easyman.ScriptService.BLL
         {
             Dictionary<string, object> dic = new Dictionary<string, object>();
             dic.Add("RUN_STATUS", runStatus.GetHashCode());
+            return Update(dic, "ID=?", scriptNodeCaseID);
+        }
+
+        /// <summary>
+        /// 保存编译的代码
+        /// </summary>
+        /// <param name="scriptNodeCaseID"></param>
+        /// <param name="compileContent"></param>
+        /// <returns></returns>
+        public int SaveNodeCaseCompile(long scriptNodeCaseID, string compileContent)
+        {
+            Dictionary<string, object> dic = new Dictionary<string, object>();
+            dic.Add("COMPILE_CONTENT", compileContent);
             return Update(dic, "ID=?", scriptNodeCaseID);
         }
 
