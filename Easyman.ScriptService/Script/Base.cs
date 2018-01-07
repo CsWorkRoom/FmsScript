@@ -1396,7 +1396,15 @@ namespace Easyman.ScriptService.Script
             string url = Librarys.Config.BConfig.GetConfigToString("MonitServiceIP");
             string postData = string.Format("ip={0}&folderName={1}&scriptNodeCaseId={2}", ip, folderName, _scriptNodeCaseID.ToString());
             var mess=Request.GetHttp(url, postData);
-            log(string.Format(@"对{0}的{1}文件夹监控结果:{2}", ip, folderName,mess));
+            if (mess.Contains("false"))
+            {
+                WriteErrorMessage(mess, 3);
+            }
+            else
+            {
+                log(string.Format(@"对{0}的{1}文件夹监控结果:{2}", ip, folderName, mess));
+            }
+
         }
         #endregion
 
@@ -1441,7 +1449,7 @@ namespace Easyman.ScriptService.Script
             }
             catch (Exception ex)
             {
-                log("执行命令异常:" + ex.Message);
+                WriteErrorMessage("执行命令异常:" + ex.Message, 3);
                 return false;
             }
         }
