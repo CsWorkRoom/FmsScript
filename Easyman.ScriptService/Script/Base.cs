@@ -1468,13 +1468,31 @@ namespace Easyman.ScriptService.Script
                      WHERE ROWNUM = 1");
             BDBHelper dbop = new BDBHelper();
             object obj = dbop.ExecuteScalar(sql);
-            log("获取到的监控文件编号【" + obj + "】");
+            if(!string.IsNullOrEmpty( obj.ToString()))
+            {
+                string msg = "未获取到需要拷贝的记录";
+                WriteErrorMessage(msg, 3);
+                log(msg);
+                return;
+            }
+            log("获取到的监控文件编号【" + obj + "】", "执行查询的sql:\r\n" + sql);
 
             string api = Librarys.Config.BConfig.GetConfigToString("MonitCopyFileIP");
             log("开始复制文件，编号【" + obj + "】");
+            log("调用拷贝接口服务，接口地址：\r\n" + api);
             //开启一个文件的复制
             string result = Request.GetHttp(api, "monitFileId=" + obj);
-            log(result, "根据该sql取一条记录去监控" + sql);
+            if (!string.IsNullOrEmpty(result))
+            {
+                result = "监控文件编号【" + obj + "】拷贝失败：" + result;
+                WriteErrorMessage(result, 2);//错误信息
+                log(result, 2);
+                return;
+            }
+            else
+            {
+                log("监控文件编号【" + obj + "】拷贝成功。");
+            }
         }
         #endregion
     }
