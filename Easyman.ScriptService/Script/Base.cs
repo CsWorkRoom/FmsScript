@@ -1468,11 +1468,11 @@ namespace Easyman.ScriptService.Script
                      WHERE ROWNUM = 1");
             BDBHelper dbop = new BDBHelper();
             object obj = dbop.ExecuteScalar(sql);
-            if(!string.IsNullOrEmpty( obj.ToString()))
+            if(string.IsNullOrEmpty( obj.ToString()))
             {
-                string msg = "未获取到需要拷贝的记录";
+                string msg = "未获取到需要拷贝的记录，当前不存在需要拷贝文件";
                 WriteErrorMessage(msg, 3);
-                log(msg);
+                //log(msg);
                 return;
             }
             log("获取到的监控文件编号【" + obj + "】", "执行查询的sql:\r\n" + sql);
@@ -1486,7 +1486,7 @@ namespace Easyman.ScriptService.Script
             {
                 result = "监控文件编号【" + obj + "】拷贝失败：" + result;
                 WriteErrorMessage(result, 2);//错误信息
-                log(result, 2);
+                //log(result, 2);
                 return;
             }
             else
