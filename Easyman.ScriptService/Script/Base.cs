@@ -14,6 +14,7 @@ using System.Net;
 using System.Diagnostics;
 using Easyman.Librarys;
 using Easyman.Librarys.ApiRequest;
+using System.Data.SqlClient;
 
 namespace Easyman.ScriptService.Script
 {
@@ -1451,6 +1452,85 @@ namespace Easyman.ScriptService.Script
             {
                 WriteErrorMessage("执行命令异常:" + ex.Message, 3);
                 return false;
+            }
+        }
+
+
+        /// <summary>
+        /// sqlserver备份
+        /// </summary>
+        /// <param name="ip"></param>
+        /// <param name="user"></param>
+        /// <param name="pwd"></param>
+        /// <param name="database"></param>
+        public void DatabaseBackup(string ip,string user,string pwd,string database)
+        {
+            string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
+            string cmdText = string.Format(@"backup database {0} to disk='{1}\{0}.bak' with INIT",database, masterIp);
+            BakReductSql(cmdText, true, ip, user, pwd, database);
+        }
+        /// <summary>
+        /// 数据库还原
+        /// </summary>
+        /// <param name="ip"></param>
+        /// <param name="user"></param>
+        /// <param name="pwd"></param>
+        /// <param name="database"></param>
+        public void DatabaseRestore(string ip, string user, string pwd, string database)
+        {
+            string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
+            string cmdText = string.Format(@"restore  database {0} from disk='{1}\{0}.bak' With Replace", database, masterIp);
+            BakReductSql(cmdText, false,  ip,  user,  pwd,  database);
+        }
+
+        /// <summary>
+        /// 对数据库的备份和恢复操作，Sql语句实现
+        /// </summary>
+        /// <param name="cmdText">实现备份或恢复的Sql语句</param>
+        /// <param name="isBak">该操作是否为备份操作，是为true否，为false</param>
+        private void BakReductSql(string cmdText, bool isBak,string ip, string user, string pwd, string database)
+        {
+            SqlCommand cmdBakRst = new SqlCommand();
+            string connStr = string.Format(@"Data Source={0};Initial Catalog=master;uid={1};pwd={2};",ip,user,pwd);
+            SqlConnection conn = new SqlConnection(connStr);
+            try
+            {
+                conn.Open();
+                cmdBakRst.Connection = conn;
+                cmdBakRst.CommandType = CommandType.Text;
+                if (!isBak)     //如果是恢复操作
+                {
+                    string setOffline = "Alter database "+ database + " Set Offline With rollback immediate ";
+                    string setOnline = " Alter database "+ database + " Set Online With Rollback immediate";
+                    cmdBakRst.CommandText = setOffline + cmdText + setOnline;
+                }
+                else
+                {
+                    cmdBakRst.CommandText = cmdText;
+                }
+                cmdBakRst.ExecuteNonQuery();
+                if (!isBak)
+                {
+                    log("恭喜你，数据成功恢复为所选文档的状态！", cmdText);
+                }
+                else
+                {
+                    log("恭喜，你已经成功备份当前数据！", cmdText);
+                }
+            }
+            catch (SqlException sexc)
+            {
+                WriteErrorMessage("失败，可能是对数据库操作失败，原因：" + sexc.Message, 3);
+            }
+            catch (Exception ex)
+            {
+                WriteErrorMessage("对不起，操作失败，可能原因：" + ex.Message, 3);
+            }
+            finally
+            {
+                cmdBakRst.Dispose();
+                conn.Close();
+                conn.Dispose();
             }
         }
         #endregion
