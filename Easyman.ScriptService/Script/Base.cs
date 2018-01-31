@@ -1466,7 +1466,8 @@ namespace Easyman.ScriptService.Script
         public void DatabaseBackup(string ip,string user,string pwd,string database)
         {
             string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
-            string cmdText = string.Format(@"backup database {0} to disk='{1}\{0}.bak' with INIT",database, masterIp);
+            string ymd = DateTime.Now.ToString("yyyyMMdd");
+            string cmdText = string.Format(@"backup database {0} to disk='{1}\{0}_{2}_{3}.bak' with INIT",database, masterIp,ip,ymd);
             BakReductSql(cmdText, true, ip, user, pwd, database);
         }
         /// <summary>
@@ -1476,10 +1477,10 @@ namespace Easyman.ScriptService.Script
         /// <param name="user"></param>
         /// <param name="pwd"></param>
         /// <param name="database"></param>
-        public void DatabaseRestore(string ip, string user, string pwd, string database)
+        public void DatabaseRestore(string ip, string user, string pwd, string database,string yearmonthday)
         {
             string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
-            string cmdText = string.Format(@"restore  database {0} from disk='{1}\{0}.bak' With Replace", database, masterIp);
+            string cmdText = string.Format(@"restore  database {0} from disk='{1}\{0}_{2}_{3}.bak' With Replace", database, masterIp,ip, yearmonthday);
             BakReductSql(cmdText, false,  ip,  user,  pwd,  database);
         }
 
