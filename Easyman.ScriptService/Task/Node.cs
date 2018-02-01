@@ -48,7 +48,7 @@ namespace Easyman.ScriptService.Task
                     WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("当前已经有【{0}】个节点实例运行，超过系统设定的最大数【{1}】，本节点实例将暂时不被执行。", Main.RunningNodeCount, Main.MaxExecuteNodeCount));
                     return false;
                 }
-                
+
                 //读取当前节点
                 _nodeCaseEntity = BLL.EM_SCRIPT_NODE_CASE.Instance.GetEntityByKey<BLL.EM_SCRIPT_NODE_CASE.Entity>(_scriptNodeCaseID);
 
@@ -57,14 +57,14 @@ namespace Easyman.ScriptService.Task
                     WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("没有获取脚本流节点实例ID【{0}】的实体对象，将不被执行。", _scriptNodeCaseID));
                     return false;
                 }
-                
+
                 //已经停止的节点，不再执行
                 if (_nodeCaseEntity.RUN_STATUS == (short)Enums.RunStatus.Stop)
                 {
                     WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】的运行状态为【停止】，本节点将不被执行。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID));
                     return false;
                 }
-                
+
                 //当前状态不等于等待执行
                 if (_nodeCaseEntity.RUN_STATUS != (short)Enums.RunStatus.Wait)
                 {
@@ -75,14 +75,14 @@ namespace Easyman.ScriptService.Task
                         return false;
                     }
                 }
-                
+
                 //添加到内存
                 if (Main.AddNodeTask(_scriptNodeCaseID) == false)
                 {
                     //WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】已经于【{4}】开始运行，本次将不被执行。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID, Main.GetNodeTaskStartTime(_scriptNodeCaseID).ToString("yyyy-MM-dd HH:mm:ss.fff")));
                     return false;
                 }
-                
+
                 //更新当前节点状态
                 int i = BLL.EM_SCRIPT_NODE_CASE.Instance.UpdateRunStatus(_scriptNodeCaseID, Enums.RunStatus.Excute);
                 if (i < 0)
@@ -90,9 +90,9 @@ namespace Easyman.ScriptService.Task
                     WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("更新脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】的运行状态为【执行中】失败，本节点将不被执行。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID));
                     return false;
                 }
-                
+
                 WriteLog(_scriptNodeCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】的运行状态已经更新为【执行中】，下面将执行节点脚本内容。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID));
-                
+
                 _bw = new BackgroundWorker();
                 _bw.WorkerSupportsCancellation = true;
                 _bw.DoWork += DoWork;
@@ -120,22 +120,23 @@ namespace Easyman.ScriptService.Task
                 {
                     ErrorInfo err = new ErrorInfo();
                     string code = Script.Transfer.Trans(_nodeCaseEntity, ref err);
-                    BLL.EM_SCRIPT_NODE_CASE.Instance.SaveNodeCaseCompile(_nodeCaseEntity.ID, code);//保存编译的脚本
-
                     if (err.IsError == true)
                     {
-                        WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】生成脚本代码失败，错误信息为：\r\n{4}", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID, err.Message), code);
+                        WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】生成脚本代码失败，错误信息为：\r\n{4}", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID, err.Message));
                         //从内存记录中移除
                         Main.RemoveNodeTask(_nodeCaseEntity.ID);
                         return;
                     }
+
+                    //保存源代码到数据库
+                    int i = BLL.EM_SCRIPT_NODE_CASE.Instance.UpdateCompileContent(_nodeCaseEntity.ID, code);
 
                     bool isSuccess = Script.Execute.Run(code, _nodeCaseEntity, ref err);
                     if (isSuccess)
                     {
                         //结束运行状态
                         BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Success.GetHashCode());
-                        WriteLog(_scriptNodeCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】已经成功执行。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID), _nodeCaseEntity.CONTENT);
+                        WriteLog(_scriptNodeCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】已经成功执行。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID));
                         //从内存记录中移除
                         Main.RemoveNodeTask(_nodeCaseEntity.ID);
                         return;
@@ -143,22 +144,27 @@ namespace Easyman.ScriptService.Task
 
                     //记录重试次数
                     int reTryTimes = BLL.EM_SCRIPT_NODE_CASE.Instance.RecordTryTimes(_nodeCaseEntity.ID);
-                    WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】第【{4}】次尝试执行失败。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID, reTryTimes), code);
 
                     //超过最大尝试次数
                     if (reTryTimes >= _maxTryTimes)
                     {
+                        WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】作了最后一次尝试，仍然执行失败，本脚本流将不再执行。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID));
+
                         BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Fail.GetHashCode());
                         BLL.EM_SCRIPT_CASE.Instance.SetFail(_nodeCaseEntity.SCRIPT_CASE_ID);
-                        WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】作了最后一次尝试，仍然执行失败，程序万念俱灰，不再尝试。错误信息为：\r\n{4}", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID, err.Message), code);
+
                         //从内存记录中移除
                         Main.RemoveNodeTask(_nodeCaseEntity.ID);
                         return;
                     }
+                    else
+                    {
+                        WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】第【{4}】次尝试执行失败，将再次尝试。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID, reTryTimes));
+                    }
                 }
                 catch (Exception ex)
                 {
-                    WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("执行节点实例【{0}】出现了未知异常，错误信息为：\r\n{1}", _scriptNodeCaseID, ex.ToString()), _nodeCaseEntity.CONTENT);
+                    WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("执行节点实例【{0}】出现了未知异常，错误信息为：\r\n{1}", _scriptNodeCaseID, ex.ToString()));
                     //从内存记录中移除
                     Main.RemoveNodeTask(_nodeCaseEntity.ID);
                     return;

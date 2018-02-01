@@ -52,7 +52,8 @@ namespace Easyman.ScriptService.BLL
         /// <returns></returns>
         public IList<Entity> GetNeedRunList()
         {
-            return GetList<Entity>("(IS_CANCEL=? OR IS_CANCEL IS NULL) AND (OBJECT_CASE_ID<1 OR OBJECT_CASE_ID IS NULL)", Enums.IsCancel.NoCancel);
+            //return GetList<Entity>("(IS_CANCEL=? OR IS_CANCEL IS NULL) AND (OBJECT_CASE_ID<1 OR OBJECT_CASE_ID IS NULL)", Enums.IsCancel.NoCancel);
+            return GetList<Entity>("IS_CANCEL IS NULL");//IS_CANCEL为空表示未处理
         }
 
         /// <summary>
@@ -77,12 +78,13 @@ namespace Easyman.ScriptService.BLL
         /// <param name="id">任务ID</param>
         /// <param name="objectCaseID">实例ID</param>
         /// <returns></returns>
-        public int SetCancel(long id, long objectCaseID)
+        public int SetCancel(long id, long objectCaseID, string cancelReason = null)
         {
             Dictionary<string, object> dic = new Dictionary<string, object>();
             dic.Add("IS_CANCEL", Enums.IsCancel.Cancel.GetHashCode());
             dic.Add("START_TIME", DateTime.Now);
             dic.Add("OBJECT_CASE_ID", objectCaseID);
+            dic.Add("CANCEL_REASON", cancelReason);
 
             return UpdateByKey(dic, id);
         }

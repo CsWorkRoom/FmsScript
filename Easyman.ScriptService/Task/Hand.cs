@@ -80,6 +80,8 @@ namespace Easyman.ScriptService.Task
 
                     if (jobList != null && jobList.Count > 0)
                     {
+                        BLog.Write(BLog.LogLevel.DEBUG, "扫描到" + jobList.Count + "个手动任务需要执行");
+
                         foreach (var jobEntity in jobList)
                         {
                             ErrorInfo err = new ErrorInfo();
@@ -134,16 +136,28 @@ namespace Easyman.ScriptService.Task
                 if (scriptCaseEntity != null)
                 {
                     WriteLog(scriptCaseEntity.ID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】找到了之前未运行完成的实例【{1}】，本次手动任务将不会执行。", scriptID, scriptCaseEntity.ID));
+
+                    //不用创建实例，不用执行
+                    BLL.EM_HAND_RECORD.Instance.SetCancel(id, scriptCaseEntity.ID);
                     return false;
                 }
                 else
                 {
                     if (Flow.CreateScriptCase(scriptID, ref scriptCaseID, ref err) == true)
                     {
+                        //记录执行的任务ID
+                        BLL.EM_HAND_RECORD.Instance.SetCaseID(id, scriptCaseID);
                         WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】成功创建了新的实例【{1}】，等待执行。", scriptID, scriptCaseID));
                     }
                     else
                     {
+                        //不能创建实例，取消执行
+                        BLL.EM_HAND_RECORD.Instance.SetCancel(id, 0);
+                        //标记为失败状态
+                        if (scriptCaseID > 0)
+                        {
+                            BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                        }
                         WriteLog(scriptCaseID, BLog.LogLevel.WARN, err.Message);
                         return false;
                     }
@@ -152,6 +166,13 @@ namespace Easyman.ScriptService.Task
             catch (Exception ex)
             {
                 WriteLog(scriptCaseID, BLog.LogLevel.ERROR, "创建脚本流实例发生了未知错误。" + ex.ToString());
+                //不能创建实例，取消执行
+                BLL.EM_HAND_RECORD.Instance.SetCancel(id, 0);
+                //标记为失败状态
+                if (scriptCaseID > 0)
+                {
+                    BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                }
                 return false;
             }
 
@@ -163,23 +184,32 @@ namespace Easyman.ScriptService.Task
         /// </summary>
         /// <param name="scriptNodeID">节点ID</param>
         /// <param name="err">错误信息</param>
-        private static bool RunNodeJob(long id, long scriptNodeID,ref ErrorInfo err)
+        private static bool RunNodeJob(long id, long scriptNodeID, ref ErrorInfo err, long? nodeCaseId = null)
         {
             int i = 0;
             try
             {
-                BLL.EM_SCRIPT_NODE_CASE.Entity nodeCaseEntity = BLL.EM_SCRIPT_NODE_CASE.Instance.GetFailCase(scriptNodeID);
+                BLL.EM_SCRIPT_NODE_CASE.Entity nodeCaseEntity = null;
+                if (nodeCaseId == null)
+                {
+                    nodeCaseEntity = BLL.EM_SCRIPT_NODE_CASE.Instance.GetFailCase(scriptNodeID);
+                }
+                else
+                {
+                    nodeCaseEntity = BLL.EM_SCRIPT_NODE_CASE.Instance.GetNodeCase(nodeCaseId.Value);
+                }
+                //BLL.EM_SCRIPT_NODE_CASE.Entity nodeCaseEntity = BLL.EM_SCRIPT_NODE_CASE.Instance.GetNodeCase(scriptNodeID);
                 if (nodeCaseEntity == null)
                 {
                     err.IsError = true;
-                    err.Message = string.Format("执行节点【{0}】的手动任务，当前没有该节点的失败节点可以执行，因此本次任务已经取消。", scriptNodeID);
+                    err.Message = string.Format("执行节点【{0}】的手动任务，当前没有该节点的失败节点(或未查找到实例对象)可以执行，因此本次任务已经取消。", scriptNodeID);
                     //设置为“取消执行”状态，无具体实例对应
-                    i = BLL.EM_HAND_RECORD.Instance.SetCancel(id, 0);
+                    i = BLL.EM_HAND_RECORD.Instance.SetCancel(id, 0, err.Message);
 
                     return false;
                 }
 
-                //记录执行的任务ID
+                //记录执行的任务ID(将处理后的手工改为已处理状态)
                 i = BLL.EM_HAND_RECORD.Instance.SetCaseID(id, nodeCaseEntity.ID);
 
                 Node node = new Node(nodeCaseEntity.ID, 1);

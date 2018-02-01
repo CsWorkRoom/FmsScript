@@ -36,7 +36,7 @@ namespace Easyman.ScriptService.Task
                 return false;
             }
 
-            //WriteLog(0, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】即将获取执行中的实例，如果有实例处于运行中，将不会创建新实例。", ID));
+            WriteLog(0, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】即将获取执行中的实例，如果有实例处于运行中，将不会创建新实例。", ID));
 
             long scriptCaseID = 0;
             try
@@ -59,6 +59,11 @@ namespace Easyman.ScriptService.Task
                     else
                     {
                         WriteLog(scriptCaseID, BLog.LogLevel.WARN, err.Message);
+                        //标记为失败状态
+                        if (scriptCaseID > 0)
+                        {
+                            BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                        }
                         return false;
                     }
                 }
@@ -66,6 +71,11 @@ namespace Easyman.ScriptService.Task
             catch (Exception ex)
             {
                 WriteLog(scriptCaseID, BLog.LogLevel.WARN, "创建脚本流实例发生了未知错误。" + ex.ToString());
+                //标记为失败状态
+                if (scriptCaseID > 0)
+                {
+                    BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                }
                 return false;
             }
 
@@ -105,10 +115,12 @@ namespace Easyman.ScriptService.Task
             if (nodeList.Count < 1)
             {
                 err.IsError = true;
-                err.Message = string.Format("脚本流【{0}】的实例【{1}】创建节点顺序实例失败。", scriptID, scriptCaseID);
+                err.Message = string.Format("脚本流【{0}】的实例【{1}】创建节点流实例失败。", scriptID, scriptCaseID);
                 return false;
             }
             WriteLog(scriptCaseID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】的实例【{1}】成功创建节点顺序实例，共有【{2}】个节点需要按顺序执行。", scriptID, scriptCaseID, nodeList.Count));
+            //修改当前实例的状态为“执行中”
+            BLL.EM_SCRIPT_CASE.Instance.UpdateRunStatus(scriptCaseID, Enums.RunStatus.Excute);
 
             //复制节点配置
             List<long> nodeCaseList = BLL.EM_SCRIPT_NODE_FORCASE.Instance.AddCaseReturnList(scriptCaseID, nodeList);

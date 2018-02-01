@@ -86,6 +86,7 @@ namespace Easyman.ScriptService.BLL
         public int SetFail(long scriptCaseID)
         {
             Dictionary<string, object> dic = new Dictionary<string, object>();
+            dic.Add("RUN_STATUS", Enums.RunStatus.Stop.GetHashCode());
             dic.Add("IS_HAVE_FAIL", Enums.IsHaveFail.HaveFail.GetHashCode());
             dic.Add("RETURN_CODE", Enums.ReturnCode.Fail.GetHashCode());
 
@@ -108,7 +109,7 @@ namespace Easyman.ScriptService.BLL
         /// <returns></returns>
         public IList<Entity> GetRunningCaseList()
         {
-            return GetList<Entity>("RUN_STATUS<> ?", Enums.RunStatus.Stop.GetHashCode());
+            return GetList<Entity>("RUN_STATUS=?", Enums.RunStatus.Excute.GetHashCode());
         }
 
         /// <summary>
@@ -136,9 +137,10 @@ namespace Easyman.ScriptService.BLL
             entity.RETRY_TIME = scriptEntity.RETRY_TIME;
             entity.START_TIME = DateTime.Now;
             entity.START_MODEL = (short)startModel.GetHashCode();
-            entity.RUN_STATUS = (short)Enums.RunStatus.Excute.GetHashCode();
+            //初始添加为“等待”状态
+            entity.RUN_STATUS = (short)Enums.RunStatus.Wait.GetHashCode();
 
-            int i = Add(entity,true);
+            int i = Add(entity, true);
             if (i > 0)
             {
                 return i;

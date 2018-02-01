@@ -44,7 +44,6 @@ namespace Easyman.ScriptService.BLL
             public Nullable<long> DB_SERVER_ID { get; set; }
             public Nullable<short> SCRIPT_MODEL { get; set; }
             public string CONTENT { get; set; }
-            public string COMPILE_CONTENT { get; set; }
             public string REMARK { get; set; }
             public string E_TABLE_NAME { get; set; }
             public string C_TABLE_NAME { get; set; }
@@ -58,6 +57,10 @@ namespace Easyman.ScriptService.BLL
             public Nullable<short> RETURN_CODE { get; set; }
             public int RETRY_TIME { get; set; }
             public Nullable<System.DateTime> END_TIME { get; set; }
+            /// <summary>
+            /// 编译前的程序源码
+            /// </summary>
+            public string COMPILE_CONTENT { get; set; }
         }
 
         /// <summary>
@@ -71,7 +74,7 @@ namespace Easyman.ScriptService.BLL
         }
 
         /// <summary>
-        /// 根据脚本流实例ID获取所有节点实例，并转为字典
+        /// 根据脚本流实例ID获取当前已经添加的所有节点实例，并转为字典
         /// </summary>
         /// <param name="scriptCaseID">脚本流实例ID</param>
         /// <returns>节点实例列表，键：节点实例ID，值：节点实例</returns>
@@ -82,7 +85,7 @@ namespace Easyman.ScriptService.BLL
             IList<Entity> list = GetList<Entity>("SCRIPT_CASE_ID=? ", scriptCaseID);
             if (list != null && list.Count > 0)
             {
-                foreach(Entity entity in list)
+                foreach (Entity entity in list)
                 {
                     if (dic.ContainsKey(entity.ID) == false)
                     {
@@ -168,19 +171,6 @@ namespace Easyman.ScriptService.BLL
         }
 
         /// <summary>
-        /// 保存编译的代码
-        /// </summary>
-        /// <param name="scriptNodeCaseID"></param>
-        /// <param name="compileContent"></param>
-        /// <returns></returns>
-        public int SaveNodeCaseCompile(long scriptNodeCaseID, string compileContent)
-        {
-            Dictionary<string, object> dic = new Dictionary<string, object>();
-            dic.Add("COMPILE_CONTENT", compileContent);
-            return Update(dic, "ID=?", scriptNodeCaseID);
-        }
-
-        /// <summary>
         /// 记录重试次数
         /// </summary>
         /// <param name="scriptNodeCaseID">脚本节点实例ID</param>
@@ -258,6 +248,16 @@ namespace Easyman.ScriptService.BLL
             return GetEntity<Entity>("SCRIPT_NODE_ID=? AND RETURN_CODE=?", scriptNodeID, Enums.ReturnCode.Fail.GetHashCode());
         }
 
+        /// <summary>
+        /// 根据节点实例ID获得节点实例
+        /// </summary>
+        /// <param name="nodeCaseId">节点实例ID</param>
+        /// <returns></returns>
+        public Entity GetNodeCase(long nodeCaseId)
+        {
+            return GetEntity<Entity>("ID=?", nodeCaseId);
+        }
+
 
         /// <summary>
         /// 添加节点实例列表
@@ -268,7 +268,14 @@ namespace Easyman.ScriptService.BLL
         /// <returns>添加成功的节点实例ID</returns>
         public long AddReturnCaseID(long scriptID, long scriptCaseID, long nodeID)
         {
-            EM_SCRIPT_NODE.Entity nodeEntity = EM_SCRIPT_NODE.Instance.GetEntityByKey<EM_SCRIPT_NODE.Entity>(nodeID);
+            //EM_SCRIPT_NODE.Entity nodeEntity = EM_SCRIPT_NODE.Instance.GetEntityByKey<EM_SCRIPT_NODE.Entity>(nodeID);
+            //应该取之前复制的节点备份
+            EM_SCRIPT_NODE_FORCASE.Entity nodeEntity = EM_SCRIPT_NODE_FORCASE.Instance.GetEntity<EM_SCRIPT_NODE_FORCASE.Entity>("SCRIPT_CASE_ID=? AND SCRIPT_NODE_ID=?", scriptCaseID, nodeID);
+            if (nodeEntity == null)
+            {
+                return 0;
+            }
+
             Entity entity = new Entity();
             if (Main.KeyFieldIsUseSequence)
             {
@@ -293,9 +300,9 @@ namespace Easyman.ScriptService.BLL
             entity.C_TABLE_NAME = nodeEntity.C_TABLE_NAME;
             entity.TABLE_TYPE = nodeEntity.TABLE_TYPE;
             entity.TABLE_MODEL = nodeEntity.TABLE_MODEL;
-            entity.CREATE_TIME = nodeEntity.CREATE_TIME;
+            entity.CREATE_TIME = DateTime.Now;// nodeEntity.CREATE_TIME;
             entity.USER_ID = nodeEntity.CREATE_UID;
-            entity.TABLE_SUFFIX = 0;
+            entity.TABLE_SUFFIX = scriptCaseID;//整个脚本流实例的所有节点实例使用同一个ID
             entity.START_TIME = DateTime.Now;
             entity.RUN_STATUS = (short)Enums.RunStatus.Wait;
             entity.RETRY_TIME = 0;  //初始为0，每失败一次加1
@@ -308,6 +315,19 @@ namespace Easyman.ScriptService.BLL
             }
 
             return 0;
+        }
+
+        /// <summary>
+        /// 更新编译前的源码
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="compileContent"></param>
+        /// <returns></returns>
+        public int UpdateCompileContent(long id, string compileContent)
+        {
+            Dictionary<string, object> dic = new Dictionary<string, object>();
+            dic.Add("COMPILE_CONTENT", compileContent);
+            return UpdateByKey(dic, id);
         }
     }
 }
