@@ -1411,7 +1411,17 @@ namespace Easyman.ScriptService.Script
 
         #region 数据库操作
 
-        public bool DataBaseCmd(string cmdStr)
+        public bool DatabaseBackupOrcale(string cmdStr)
+        {
+            return ExeCmd(cmdStr);
+        }
+
+        public bool DatabaseRestoreOracle(string cmdStr)
+        {
+            return ExeCmd(cmdStr);
+        }
+
+        private bool ExeCmd(string cmdStr)
         {
             try
             {
@@ -1445,7 +1455,7 @@ namespace Easyman.ScriptService.Script
 
                 p.WaitForExit();//启用则以同步方式执行命令
                 p.Close();
-                log("执行结果:"+logBat.ToString());
+                log("执行结果:" + logBat.ToString());
                 return true;
             }
             catch (Exception ex)
@@ -1463,7 +1473,7 @@ namespace Easyman.ScriptService.Script
         /// <param name="user"></param>
         /// <param name="pwd"></param>
         /// <param name="database"></param>
-        public void DatabaseBackup(string ip,string user,string pwd,string database)
+        public void DatabaseBackupSqlServer(string ip,string user,string pwd,string database)
         {
             string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
             string ymd = DateTime.Now.ToString("yyyyMMdd");
@@ -1477,7 +1487,7 @@ namespace Easyman.ScriptService.Script
         /// <param name="user"></param>
         /// <param name="pwd"></param>
         /// <param name="database"></param>
-        public void DatabaseRestore(string ip, string user, string pwd, string database,string yearmonthday)
+        public void DatabaseRestoreSqlServer(string ip, string user, string pwd, string database,string yearmonthday)
         {
             string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
             string cmdText = string.Format(@"restore  database {0} from disk='{1}\{0}_{2}_{3}.bak' With Replace", database, masterIp,ip, yearmonthday);
