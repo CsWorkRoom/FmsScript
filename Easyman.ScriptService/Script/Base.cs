@@ -1473,12 +1473,29 @@ namespace Easyman.ScriptService.Script
         /// <param name="user"></param>
         /// <param name="pwd"></param>
         /// <param name="database"></param>
-        public void DatabaseBackupSqlServer(string ip,string user,string pwd,string database)
+        public void DatabaseBackupSqlServer(string ip,string user,string pwd,string database,string folder)
         {
-            string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
+           // string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
             string ymd = DateTime.Now.ToString("yyyyMMdd");
-            string cmdText = string.Format(@"backup database {0} to disk='{1}\{0}_{2}_{3}.bak' with INIT",database, masterIp,ip,ymd);
+            // string cmdText = string.Format(@"backup database {0} to disk='{1}\{0}_{2}_{3}.bak' with INIT", database, masterIp, ip, ymd);
+            string filter = "DataBase$$lcz$$cs";
+            string fileName = string.Format("{0}_{1}_{2}_{3}", database,ip,ymd, filter);
+            string cmdText = string.Format(@"backup database {0} to disk='\\127.0.0.1\{1}\{2}.bak' with INIT", database, folder, fileName);
             BakReductSql(cmdText, true, ip, user, pwd, database);
+
+
+            string url = Librarys.Config.BConfig.GetConfigToString("DataBaseUpFileIP"); 
+            string postData = string.Format("ip={0}&folderName={1}&fileName={2}", ip, folder,fileName);
+            var mess = Request.GetHttp(url, postData);
+            if (mess.Contains("false"))
+            {
+                WriteErrorMessage(mess, 3);
+            }
+            else
+            {
+                log(string.Format(@"SqlServer:对{0}的{1}数据库备份结果:{2}", ip, database, mess));
+            }
+           
         }
         /// <summary>
         /// 数据库还原
@@ -1487,11 +1504,27 @@ namespace Easyman.ScriptService.Script
         /// <param name="user"></param>
         /// <param name="pwd"></param>
         /// <param name="database"></param>
-        public void DatabaseRestoreSqlServer(string ip, string user, string pwd, string database,string yearmonthday)
+        public void DatabaseRestoreSqlServer(string ip, string user, string pwd, string database,string yearmonthday, string folder)
         {
-            string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
-            string cmdText = string.Format(@"restore  database {0} from disk='{1}\{0}_{2}_{3}.bak' With Replace", database, masterIp,ip, yearmonthday);
-            BakReductSql(cmdText, false,  ip,  user,  pwd,  database);
+            //string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
+            // string cmdText = string.Format(@"restore  database {0} from disk='{1}\{0}_{2}_{3}.bak' With Replace", database, masterIp,ip, yearmonthday);
+            string ymd = DateTime.Now.ToString("yyyyMMdd");
+            string filter = "DataBase$$lcz$$cs";
+            string fileName = string.Format("{0}_{1}_{2}_{3}", database, ip, ymd, filter);
+            string url = Librarys.Config.BConfig.GetConfigToString("DataBaseDownFileIP");
+            string postData = string.Format("ip={0}&folderName={1}&fileName={2}", ip, folder, fileName);
+            var mess = Request.GetHttp(url, postData);
+            if (mess.Contains("false"))
+            {
+                WriteErrorMessage(mess, 3);
+            }
+            else
+            {
+                log(string.Format(@"SqlServer:对{0}的{1}数据库还原结果:{2}", ip, database, mess));
+            }
+
+            string cmdText = string.Format(@"restore  database {0} from disk='\\127.0.0.1\{1}\{2}.bak' With Replace", database, folder, fileName);
+            BakReductSql(cmdText, false, ip, user, pwd, database);
         }
 
         /// <summary>
