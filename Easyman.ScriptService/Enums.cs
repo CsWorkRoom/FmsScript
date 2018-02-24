@@ -158,5 +158,16 @@ namespace Easyman.ScriptService
             [Description("脚本流节点")]
             ScriptNode = 2
         }
+
+        /// <summary>
+        /// 是否支持并发
+        /// </summary>
+        public enum IsSupervene
+        {
+            [Description("支持并发")]
+            Yes = 1,
+            [Description("不支持并发")]
+            No = 0
+        }
     }
 }

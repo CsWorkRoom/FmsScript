@@ -48,6 +48,10 @@ namespace Easyman.ScriptService.BLL
             public Nullable<short> IS_HAVE_FAIL { get; set; }
             public Nullable<short> RETURN_CODE { get; set; }
             public Nullable<System.DateTime> END_TIME { get; set; }
+            /// <summary>
+            /// 是否支持并发
+            /// </summary>
+            public Nullable<short> IS_SUPERVENE { get; set; }
         }
 
         /// <summary>
@@ -94,13 +98,13 @@ namespace Easyman.ScriptService.BLL
         }
 
         /// <summary>
-        /// 获取脚本正在运行中的实例
+        /// 获取脚本正在运行中的实例(排除并发的任务组)
         /// </summary>
         /// <param name="scriptID">脚本ID</param>
         /// <returns></returns>
         public Entity GetRunningCase(long scriptID)
         {
-            return GetEntity<Entity>("SCRIPT_ID=? AND RUN_STATUS<>?", scriptID, Enums.RunStatus.Stop.GetHashCode());
+            return GetEntity<Entity>("SCRIPT_ID=? AND RUN_STATUS<>? AND IS_SUPERVENE<>?", scriptID, Enums.RunStatus.Stop.GetHashCode(), Enums.IsSupervene.Yes.GetHashCode());
         }
 
         /// <summary>
@@ -139,7 +143,7 @@ namespace Easyman.ScriptService.BLL
             entity.START_MODEL = (short)startModel.GetHashCode();
             //初始添加为“等待”状态
             entity.RUN_STATUS = (short)Enums.RunStatus.Wait.GetHashCode();
-
+            entity.IS_SUPERVENE = scriptEntity.IS_SUPERVENE;//是否并发
             int i = Add(entity, true);
             if (i > 0)
             {

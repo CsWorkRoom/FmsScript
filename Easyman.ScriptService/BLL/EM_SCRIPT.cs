@@ -51,6 +51,10 @@ namespace Easyman.ScriptService.BLL
             public Nullable<DateTime> UPDATE_TIME { get; set; }
             public Nullable<long> UPDATE_UID { get; set; }
             public virtual EM_SCRIPT_TYPE EM_SCRIPT_TYPE { get; set; }
+            /// <summary>
+            /// 是否支持并发》20180224cs添加,为支持任务组能并发执行
+            /// </summary>
+            public Nullable<short> IS_SUPERVENE { get; set; }
         }
 
         /// <summary>

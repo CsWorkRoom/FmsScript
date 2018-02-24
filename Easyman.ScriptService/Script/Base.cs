@@ -1394,8 +1394,11 @@ namespace Easyman.ScriptService.Script
 
             
             log(string.Format(@"开启对{0}的{1}文件夹监控...",ip,folderName));
-            string url = Librarys.Config.BConfig.GetConfigToString("MonitServiceIP");
+            string url = Librarys.Config.BConfig.GetConfigToString("MonitServiceIP");           
             string postData = string.Format("ip={0}&folderName={1}&scriptNodeCaseId={2}", ip, folderName, _scriptNodeCaseID.ToString());
+            log("参数说明:"+postData);
+            string surl = url + (postData == "" ? "" : "?") + postData;
+            log("访问路径:"+surl);
             var mess=Request.GetHttp(url, postData);
             if (mess.Contains("false"))
             {
