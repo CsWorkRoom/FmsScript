@@ -113,6 +113,17 @@ namespace Easyman.ScriptService
                 _bw.DoWork += bw_DoWork;
                 _bw.RunWorkerAsync();
 
+                #region 停止遗留的可并行任务组
+                var supCaseList = BLL.EM_SCRIPT_CASE.Instance.GetRunningSuperveneCaseList();
+                if (supCaseList != null && supCaseList.Count > 0)
+                {
+                    foreach (var sc in supCaseList)
+                    {
+                        BLL.EM_SCRIPT_CASE.Instance.SetStop(sc.ID, Enums.ReturnCode.Success);
+                    }
+                }
+                #endregion
+
                 //启动手动任务线程
                 Task.Hand.Start();
 

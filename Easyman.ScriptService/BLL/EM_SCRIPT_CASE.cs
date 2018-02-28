@@ -105,6 +105,7 @@ namespace Easyman.ScriptService.BLL
         public Entity GetRunningCase(long scriptID)
         {
             return GetEntity<Entity>("SCRIPT_ID=? AND RUN_STATUS<>? AND IS_SUPERVENE<>?", scriptID, Enums.RunStatus.Stop.GetHashCode(), Enums.IsSupervene.Yes.GetHashCode());
+            //return GetEntity<Entity>("SCRIPT_ID=? AND RUN_STATUS<>? ", scriptID, Enums.RunStatus.Stop.GetHashCode());
         }
 
         /// <summary>
@@ -114,6 +115,15 @@ namespace Easyman.ScriptService.BLL
         public IList<Entity> GetRunningCaseList()
         {
             return GetList<Entity>("RUN_STATUS=?", Enums.RunStatus.Excute.GetHashCode());
+        }
+
+        /// <summary>
+        /// 获取所有待执行及执行中脚本流实例的ID列表(并行任务)
+        /// </summary>
+        /// <returns></returns>
+        public IList<Entity> GetRunningSuperveneCaseList()
+        {
+            return GetList<Entity>("RUN_STATUS=? AND IS_SUPERVENE=?", Enums.RunStatus.Excute.GetHashCode(), Enums.IsSupervene.Yes.GetHashCode());
         }
 
         /// <summary>
