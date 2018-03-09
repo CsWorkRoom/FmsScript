@@ -41,7 +41,7 @@ namespace Easyman.ScriptService.Task
             long scriptCaseID = 0;
             try
             {
-                //先尝试取之前未完成的节点(排除并发任务组)
+                //先尝试取之前未完成的节点(排除并发任务组)+执行中的任务实例
                 BLL.EM_SCRIPT_CASE.Entity scriptCaseEntity = BLL.EM_SCRIPT_CASE.Instance.GetRunningCase(ID);
                 if (scriptCaseEntity != null)
                 {

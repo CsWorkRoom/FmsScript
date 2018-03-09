@@ -99,12 +99,13 @@ namespace Easyman.ScriptService.BLL
 
         /// <summary>
         /// 获取脚本正在运行中的实例(排除并发的任务组)
+        /// 只获取处于执行中的任务实例(等待中的任务实例排除掉)
         /// </summary>
         /// <param name="scriptID">脚本ID</param>
         /// <returns></returns>
         public Entity GetRunningCase(long scriptID)
         {
-            return GetEntity<Entity>("SCRIPT_ID=? AND RUN_STATUS<>? AND IS_SUPERVENE<>?", scriptID, Enums.RunStatus.Stop.GetHashCode(), Enums.IsSupervene.Yes.GetHashCode());
+            return GetEntity<Entity>("SCRIPT_ID=? AND RUN_STATUS=? AND IS_SUPERVENE<>?", scriptID, Enums.RunStatus.Excute.GetHashCode(), Enums.IsSupervene.Yes.GetHashCode());
             //return GetEntity<Entity>("SCRIPT_ID=? AND RUN_STATUS<>? ", scriptID, Enums.RunStatus.Stop.GetHashCode());
         }
 
@@ -123,8 +124,18 @@ namespace Easyman.ScriptService.BLL
         /// <returns></returns>
         public IList<Entity> GetRunningSuperveneCaseList()
         {
-            return GetList<Entity>("RUN_STATUS=? AND IS_SUPERVENE=?", Enums.RunStatus.Excute.GetHashCode(), Enums.IsSupervene.Yes.GetHashCode());
+            return GetList<Entity>("RUN_STATUS<>? AND IS_SUPERVENE=?", Enums.RunStatus.Stop.GetHashCode(), Enums.IsSupervene.Yes.GetHashCode());
         }
+
+        /// <summary>
+        /// 获取所有待执行及执行中脚本流实例的ID列表(非并行任务)
+        /// </summary>
+        /// <returns></returns>
+        public IList<Entity> GetRunningNoSuperveneCaseList()
+        {
+            return GetList<Entity>("RUN_STATUS=? AND IS_SUPERVENE=?", Enums.RunStatus.Wait.GetHashCode(), Enums.IsSupervene.No.GetHashCode());
+        }
+
 
         /// <summary>
         /// 添加一个实例，返回实例ID

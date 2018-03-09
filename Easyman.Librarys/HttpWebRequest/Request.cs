@@ -74,7 +74,7 @@ namespace Easyman.Librarys.ApiRequest
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(Url + (postDataStr == "" ? "" : "?") + postDataStr);
             request.Method = "GET";
             request.ContentType = "text/html;charset=UTF-8";
-            request.Timeout = 3600000;//等待1小时
+            request.Timeout = 3600000*12;//等待1小时
 
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
             Stream myResponseStream = response.GetResponseStream();
