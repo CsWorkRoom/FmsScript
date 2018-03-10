@@ -1593,14 +1593,17 @@ namespace Easyman.ScriptService.Script
                                WHERE COPY_STATUS = 0 OR COPY_STATUS = 3
                             ORDER BY ID)
                      WHERE ROWNUM = 1");
-            BDBHelper dbop = new BDBHelper();
 
-            object obj = "";
-            DataTable dt = dbop.ExecuteDataTable(sql);
-            if(dt!=null&&dt.Rows.Count>0)
+                object obj = "";
+            using (BDBHelper dbop = new BDBHelper())
             {
-                obj = dt.Rows[0][0];
+                DataTable dt = dbop.ExecuteDataTable(sql);
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    obj = dt.Rows[0][0];
+                }
             }
+
             //object obj = dbop.ExecuteScalar(sql);
             if(string.IsNullOrEmpty( obj.ToString()))
             {
