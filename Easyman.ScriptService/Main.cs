@@ -30,6 +30,12 @@ namespace Easyman.ScriptService
         /// </summary>
         public static int MaxExecuteNodeCount = 10;
         /// <summary>
+        /// 允许并行的上传数（默认为10）
+        /// </summary>
+        public static int MaxUploadCount = 10;
+
+        public static int CurUploadCount = 0;
+        /// <summary>
         /// 主键是否是自增长（可能已经使用了数据库自带的自增或者通过触发器实现自增，默认为true）
         /// </summary>
         public static bool KeyFieldIsAutoIncrement = true;
@@ -74,6 +80,12 @@ namespace Easyman.ScriptService
                 {
                     MaxExecuteNodeCount = 10;
                 }
+
+                MaxUploadCount = BConfig.GetConfigToInt("MaxUploadCount");
+                //if (MaxExecuteNodeCount < 1)
+                //{
+                //    MaxExecuteNodeCount = 10;
+                //}
 
                 if (bool.TryParse(BConfig.GetConfigToString("KeyFieldIsAutoIncrement"), out KeyFieldIsAutoIncrement) == false)
                 {

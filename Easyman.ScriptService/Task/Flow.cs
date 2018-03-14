@@ -38,46 +38,111 @@ namespace Easyman.ScriptService.Task
 
             WriteLog(0, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】即将获取执行中的实例，如果有实例处于运行中，将不会创建新实例。", ID));
 
-            long scriptCaseID = 0;
-            try
+            var scr= BLL.EM_SCRIPT.Instance.GetScriptSupervene(ID);
+            WriteLog(0, BLog.LogLevel.DEBUG, string.Format("获取是否为并行任务。"));
+            if (scr!=null&&scr.ID>0)
             {
-                //先尝试取之前未完成的节点(排除并发任务组)+执行中的任务实例
-                BLL.EM_SCRIPT_CASE.Entity scriptCaseEntity = BLL.EM_SCRIPT_CASE.Instance.GetRunningCase(ID);
-                if (scriptCaseEntity != null)
+                WriteLog(0, BLog.LogLevel.DEBUG, string.Format("获取是否为并行任务。" + scr.IS_SUPERVENE.Value));
+                lock (this)
                 {
-                    WriteLog(scriptCaseEntity.ID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】找到了之前未运行完成的实例【{1}】，本次任务将不会创建新实例。", ID, scriptCaseEntity.ID));
-                    return false;
-                }
-                else
-                {
-                    ErrorInfo err = new ErrorInfo();
-
-                    if (CreateScriptCase(ID, ref scriptCaseID, ref err) == true)
+                    int curNum = 0;
+                    while (curNum < Main.MaxUploadCount&& Main.CurUploadCount < Main.MaxUploadCount)
                     {
-                        WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】成功创建了新的实例【{1}】，等待执行。", ID, scriptCaseID));
+                        WriteLog(0, BLog.LogLevel.DEBUG, string.Format("curNum{0},MaxUploadCount{1},CurUploadCount{2}。", curNum, Main.MaxUploadCount.ToString(), Main.CurUploadCount));
+                        long scriptCaseID = 0;
+                        try
+                        {
+                            //先尝试取之前未完成的节点(排除并发任务组)+执行中的任务实例
+                            BLL.EM_SCRIPT_CASE.Entity scriptCaseEntity = BLL.EM_SCRIPT_CASE.Instance.GetRunningCase(ID);
+                            if (scriptCaseEntity != null)
+                            {
+                                WriteLog(scriptCaseEntity.ID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】找到了之前未运行完成的实例【{1}】，本次任务将不会创建新实例。", ID, scriptCaseEntity.ID));
+                                return false;
+                            }
+                            else
+                            {
+                                ErrorInfo err = new ErrorInfo();
+
+                                if (CreateScriptCase(ID, ref scriptCaseID, ref err) == true)
+                                {
+                                    WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】成功创建了新的实例【{1}】，等待执行。", ID, scriptCaseID));
+                                }
+                                else
+                                {
+                                    WriteLog(scriptCaseID, BLog.LogLevel.WARN, err.Message);
+                                    //标记为失败状态
+                                    if (scriptCaseID > 0)
+                                    {
+                                        BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                                    }
+                                    return false;
+                                }
+                            }
+
+                            Main.CurUploadCount++;
+
+                            //_dicTaskers.Add(ID, null);
+                        }
+                        catch (Exception ex)
+                        {
+                            WriteLog(scriptCaseID, BLog.LogLevel.WARN, "创建脚本流实例发生了未知错误。" + ex.ToString());
+                            //标记为失败状态
+                            if (scriptCaseID > 0)
+                            {
+                                BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                            }
+                            return false;
+                        }
+                        curNum++;
+                    }
+                }
+            }
+            else
+            {
+                #region
+                long scriptCaseID = 0;
+                try
+                {
+                    //先尝试取之前未完成的节点(排除并发任务组)+执行中的任务实例
+                    BLL.EM_SCRIPT_CASE.Entity scriptCaseEntity = BLL.EM_SCRIPT_CASE.Instance.GetRunningCase(ID);
+                    if (scriptCaseEntity != null)
+                    {
+                        WriteLog(scriptCaseEntity.ID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】找到了之前未运行完成的实例【{1}】，本次任务将不会创建新实例。", ID, scriptCaseEntity.ID));
+                        return false;
                     }
                     else
                     {
-                        WriteLog(scriptCaseID, BLog.LogLevel.WARN, err.Message);
-                        //标记为失败状态
-                        if (scriptCaseID > 0)
+                        ErrorInfo err = new ErrorInfo();
+
+                        if (CreateScriptCase(ID, ref scriptCaseID, ref err) == true)
                         {
-                            BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                            WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】成功创建了新的实例【{1}】，等待执行。", ID, scriptCaseID));
                         }
-                        return false;
+                        else
+                        {
+                            WriteLog(scriptCaseID, BLog.LogLevel.WARN, err.Message);
+                            //标记为失败状态
+                            if (scriptCaseID > 0)
+                            {
+                                BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                            }
+                            return false;
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                WriteLog(scriptCaseID, BLog.LogLevel.WARN, "创建脚本流实例发生了未知错误。" + ex.ToString());
-                //标记为失败状态
-                if (scriptCaseID > 0)
+                catch (Exception ex)
                 {
-                    BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                    WriteLog(scriptCaseID, BLog.LogLevel.WARN, "创建脚本流实例发生了未知错误。" + ex.ToString());
+                    //标记为失败状态
+                    if (scriptCaseID > 0)
+                    {
+                        BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                    }
+                    return false;
                 }
-                return false;
+                #endregion
             }
+
 
             return true;
         }

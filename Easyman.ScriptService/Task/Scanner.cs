@@ -218,6 +218,12 @@ namespace Easyman.ScriptService.Task
             if (isComplete || returnCode == Enums.ReturnCode.Fail)
             {
                 BLL.EM_SCRIPT_CASE.Instance.SetStop(scriptCaseID, returnCode);
+                lock (dicAllNodes)
+                {
+                    Main.CurUploadCount--;
+                    WriteLog(0, BLog.LogLevel.DEBUG, string.Format("MaxUploadCount{0},CurUploadCount{1}。",  Main.MaxUploadCount.ToString(), Main.CurUploadCount));
+                }
+               
                 WriteLog(scriptCaseID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】的实例【{1}】所有节点已经执行完成，执行结果【{2}】。", scriptID, scriptCaseID, returnCode.ToString()));
             }
             return true;

@@ -152,6 +152,7 @@ namespace Easyman.ScriptService.Task
 
                         BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Fail.GetHashCode());
                         BLL.EM_SCRIPT_CASE.Instance.SetFail(_nodeCaseEntity.SCRIPT_CASE_ID);
+                        Main.CurUploadCount--;
 
                         //从内存记录中移除
                         Main.RemoveNodeTask(_nodeCaseEntity.ID);
@@ -167,6 +168,7 @@ namespace Easyman.ScriptService.Task
                     WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("执行节点实例【{0}】出现了未知异常，错误信息为：\r\n{1}", _scriptNodeCaseID, ex.ToString()));
                     //从内存记录中移除
                     Main.RemoveNodeTask(_nodeCaseEntity.ID);
+                    Main.CurUploadCount--;
                     return;
                 }
             }

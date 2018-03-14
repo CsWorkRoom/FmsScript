@@ -15,6 +15,7 @@ using System.Diagnostics;
 using Easyman.Librarys;
 using Easyman.Librarys.ApiRequest;
 using System.Data.SqlClient;
+using System.Collections;
 
 namespace Easyman.ScriptService.Script
 {
@@ -1585,52 +1586,83 @@ namespace Easyman.ScriptService.Script
         #region 拷贝文件
         public void CopyFileToServer()
         {
-            log("开始获取监控文件");
-
-            string sql = string.Format(@"SELECT ID
+            try
+            {
+                log("开始获取监控文件");
+                //global.list.Add();
+                string ids = String.Join(",", global.list.ToArray());
+                string sql = "";
+                if(global.list.Count>0)
+                {
+                    sql = string.Format(@"SELECT ID
+                      FROM(SELECT ID
+                                FROM FM_MONIT_FILE
+                               WHERE COPY_STATUS = 0 OR COPY_STATUS = 3
+                               AND ID NOT IN ({0})
+                            ORDER BY ID)
+                     WHERE ROWNUM = 1", ids);
+                }
+                else
+                {
+                    sql = string.Format(@"SELECT ID
                       FROM(SELECT ID
                                 FROM FM_MONIT_FILE
                                WHERE COPY_STATUS = 0 OR COPY_STATUS = 3
                             ORDER BY ID)
                      WHERE ROWNUM = 1");
+                }
 
                 object obj = "";
-            using (BDBHelper dbop = new BDBHelper())
-            {
-                DataTable dt = dbop.ExecuteDataTable(sql);
-                if (dt != null && dt.Rows.Count > 0)
+                using (BDBHelper dbop = new BDBHelper())
                 {
-                    obj = dt.Rows[0][0];
+                    DataTable dt = dbop.ExecuteDataTable(sql);
+                    if (dt != null && dt.Rows.Count > 0)
+                    {
+                        obj = dt.Rows[0][0];
+                        global.list.Add(Convert.ToInt64(obj));
+                    }
                 }
-            }
 
-            //object obj = dbop.ExecuteScalar(sql);
-            if(string.IsNullOrEmpty( obj.ToString()))
-            {
-                string msg = "未获取到需要拷贝的记录，当前不存在需要拷贝文件";
-                //WriteErrorMessage(msg, 3);
-                log(msg);
-                return;
-            }
-            log("获取到的监控文件编号【" + obj + "】", "执行查询的sql:\r\n" + sql);
+                //object obj = dbop.ExecuteScalar(sql);
+                if (string.IsNullOrEmpty(obj.ToString()))
+                {
+                    string msg = "未获取到需要拷贝的记录，当前不存在需要拷贝文件";
+                    //WriteErrorMessage(msg, 3);
+                    log(msg);
+                    return;
+                }
+                log("获取到的监控文件编号【" + obj + "】", "执行查询的sql:\r\n" + sql);
 
-            string api = Librarys.Config.BConfig.GetConfigToString("MonitCopyFileIP");
-            log("开始复制文件，编号【" + obj + "】");
-            log("调用拷贝接口服务，接口地址：\r\n" + api);
-            //开启一个文件的复制
-            string result = Request.GetHttp(api, "monitFileId=" + obj);
-            if (!string.IsNullOrEmpty(result))
-            {
-                result = "监控文件编号【" + obj + "】拷贝失败：" + result;
-                WriteErrorMessage(result, 2);//错误信息
-                //log(result, 2);
-                return;
+                string api = Librarys.Config.BConfig.GetConfigToString("MonitCopyFileIP");
+                log("开始复制文件，编号【" + obj + "】");
+                log("调用拷贝接口服务，接口地址：\r\n" + api);
+                //开启一个文件的复制
+                string result = Request.GetHttp(api, "monitFileId=" + obj);
+                if (!string.IsNullOrEmpty(result))
+                {
+                    result = "监控文件编号【" + obj + "】拷贝失败：" + result;
+                    WriteErrorMessage(result, 2);//错误信息
+                    global.list.Remove(Convert.ToInt64(obj));
+                    //log(result, 2);
+                    return;
+                }
+                else
+                {
+                    log("监控文件编号【" + obj + "】拷贝成功。");
+                }
+                global.list.Remove(Convert.ToInt64(obj));
             }
-            else
+            catch (Exception ex)
             {
-                log("监控文件编号【" + obj + "】拷贝成功。");
+                log("监控异常：" + ex.Message);
+                
             }
         }
+        #endregion
+
+        #region 自动上传文件--允许指定终端和共享目录
+        //public void CopyFileByPcFolder(string pcName,string folderName)
+        //{ }
         #endregion
     }
 }

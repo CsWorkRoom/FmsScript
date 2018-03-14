@@ -75,5 +75,14 @@ namespace Easyman.ScriptService.BLL
         {
             return GetStringValueByKey(scriptID, "CRON");
         }
+        /// <summary>
+        /// 根据ID获取设定为并行的任务组
+        /// </summary>
+        /// <param name="scriptID"></param>
+        /// <returns></returns>
+        public Entity GetScriptSupervene(long scriptID)
+        {
+            return GetEntity<Entity>("ID=? AND IS_SUPERVENE=?", scriptID, Enums.IsSupervene.Yes.GetHashCode());
+        }
     }
 }

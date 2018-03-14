@@ -1,5 +1,6 @@
 ﻿using Easyman.Librarys.ApiRequest;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceProcess;
@@ -37,5 +38,15 @@ namespace Easyman.ScriptService
         {
             Request.GetHttp("http://localhost:6235/api/services/api/MonitFile/UpFileByMonitFile", "monitFileId=53");
         }
+    }
+
+    public class global
+    {
+        public static List<long> list = new List<long>();
+
+        /// <summary>
+        /// 已经启动的脚本流线程
+        /// </summary>
+        public static Dictionary<int, Task.Flow> _dicTaskers = new Dictionary<int, Task.Flow>();
     }
 }
