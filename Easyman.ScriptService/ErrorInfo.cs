@@ -15,6 +15,11 @@ namespace Easyman.ScriptService
         /// 是否出错
         /// </summary>
         public bool IsError { get; set; }
+
+        /// <summary>
+        /// 是否警告
+        /// </summary>
+        public bool IsWarn { get; set; }
         /// <summary>
         /// 错误信息
         /// </summary>

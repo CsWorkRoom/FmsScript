@@ -127,7 +127,7 @@ namespace Easyman.ScriptService.Task
                         Main.RemoveNodeTask(_nodeCaseEntity.ID);
                         return;
                     }
-
+                    
                     //保存源代码到数据库
                     int i = BLL.EM_SCRIPT_NODE_CASE.Instance.UpdateCompileContent(_nodeCaseEntity.ID, code);
 
@@ -135,8 +135,15 @@ namespace Easyman.ScriptService.Task
                     if (isSuccess)
                     {
                         //结束运行状态
-                        BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Success.GetHashCode());
-                        WriteLog(_scriptNodeCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】已经成功执行。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID));
+                        if (err.IsWarn)
+                        {
+                            BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Warn.GetHashCode());
+                        }
+                        else
+                        {
+                            BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Success.GetHashCode());
+                        }                       
+                        WriteLog(_scriptNodeCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】已经成功执行。预警状态:{4}", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID, err.IsWarn.ToString()));
                         //从内存记录中移除
                         Main.RemoveNodeTask(_nodeCaseEntity.ID);
                         return;
