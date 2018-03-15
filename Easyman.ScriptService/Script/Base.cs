@@ -1417,14 +1417,14 @@ namespace Easyman.ScriptService.Script
         public void MonitorStart(string ip, string folderName)
         {
 
-            
-            log(string.Format(@"开启对{0}的{1}文件夹监控...",ip,folderName));
-            string url = Librarys.Config.BConfig.GetConfigToString("MonitServiceIP");           
+
+            log(string.Format(@"开启对{0}的{1}文件夹监控...", ip, folderName));
+            string url = Librarys.Config.BConfig.GetConfigToString("MonitServiceIP");
             string postData = string.Format("ip={0}&folderName={1}&scriptNodeCaseId={2}", ip, folderName, _scriptNodeCaseID.ToString());
-            log("参数说明:"+postData);
+            log("参数说明:" + postData);
             string surl = url + (postData == "" ? "" : "?") + postData;
-            log("访问路径:"+surl);
-            var mess=Request.GetHttp(url, postData);
+            log("访问路径:" + surl);
+            var mess = Request.GetHttp(url, postData);
             if (mess.Contains("结果:false"))
             {
                 WriteErrorMessage(mess, 3);
@@ -1505,19 +1505,19 @@ namespace Easyman.ScriptService.Script
         /// <param name="user"></param>
         /// <param name="pwd"></param>
         /// <param name="database"></param>
-        public void DatabaseBackupSqlServer(string ip,string user,string pwd,string database,string folder)
+        public void DatabaseBackupSqlServer(string ip, string user, string pwd, string database, string folder)
         {
-           // string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
+            // string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
             string ymd = DateTime.Now.ToString("yyyyMMdd");
             // string cmdText = string.Format(@"backup database {0} to disk='{1}\{0}_{2}_{3}.bak' with INIT", database, masterIp, ip, ymd);
             string filter = "DataBase$$lcz$$cs";
-            string fileName = string.Format("{0}_{1}_{2}_{3}", database,ip,ymd, filter);
+            string fileName = string.Format("{0}_{1}_{2}_{3}", database, ip, ymd, filter);
             string cmdText = string.Format(@"backup database {0} to disk='\\127.0.0.1\{1}\{2}.bak' with INIT", database, folder, fileName);
             BakReductSql(cmdText, true, ip, user, pwd, database);
 
 
-            string url = Librarys.Config.BConfig.GetConfigToString("DataBaseUpFileIP"); 
-            string postData = string.Format("ip={0}&folderName={1}&fileName={2}", ip, folder,fileName);
+            string url = Librarys.Config.BConfig.GetConfigToString("DataBaseUpFileIP");
+            string postData = string.Format("ip={0}&folderName={1}&fileName={2}", ip, folder, fileName);
             var mess = Request.GetHttp(url, postData);
             if (mess.Contains("false"))
             {
@@ -1527,7 +1527,7 @@ namespace Easyman.ScriptService.Script
             {
                 log(string.Format(@"SqlServer:对{0}的{1}数据库备份结果:{2}", ip, database, mess));
             }
-           
+
         }
         /// <summary>
         /// 数据库还原
@@ -1536,7 +1536,7 @@ namespace Easyman.ScriptService.Script
         /// <param name="user"></param>
         /// <param name="pwd"></param>
         /// <param name="database"></param>
-        public void DatabaseRestoreSqlServer(string ip, string user, string pwd, string database,string yearmonthday, string folder)
+        public void DatabaseRestoreSqlServer(string ip, string user, string pwd, string database, string yearmonthday, string folder)
         {
             //string masterIp = Librarys.Config.BConfig.GetConfigToString("MasterServiceIP");
             // string cmdText = string.Format(@"restore  database {0} from disk='{1}\{0}_{2}_{3}.bak' With Replace", database, masterIp,ip, yearmonthday);
@@ -1564,10 +1564,10 @@ namespace Easyman.ScriptService.Script
         /// </summary>
         /// <param name="cmdText">实现备份或恢复的Sql语句</param>
         /// <param name="isBak">该操作是否为备份操作，是为true否，为false</param>
-        private void BakReductSql(string cmdText, bool isBak,string ip, string user, string pwd, string database)
+        private void BakReductSql(string cmdText, bool isBak, string ip, string user, string pwd, string database)
         {
             SqlCommand cmdBakRst = new SqlCommand();
-            string connStr = string.Format(@"Data Source={0};Initial Catalog=master;uid={1};pwd={2};",ip,user,pwd);
+            string connStr = string.Format(@"Data Source={0};Initial Catalog=master;uid={1};pwd={2};", ip, user, pwd);
             SqlConnection conn = new SqlConnection(connStr);
             try
             {
@@ -1576,8 +1576,8 @@ namespace Easyman.ScriptService.Script
                 cmdBakRst.CommandType = CommandType.Text;
                 if (!isBak)     //如果是恢复操作
                 {
-                    string setOffline = "Alter database "+ database + " Set Offline With rollback immediate ";
-                    string setOnline = " Alter database "+ database + " Set Online With Rollback immediate";
+                    string setOffline = "Alter database " + database + " Set Offline With rollback immediate ";
+                    string setOnline = " Alter database " + database + " Set Online With Rollback immediate";
                     cmdBakRst.CommandText = setOffline + cmdText + setOnline;
                 }
                 else
@@ -1620,7 +1620,7 @@ namespace Easyman.ScriptService.Script
             try
             {
                 string sql = "";
-                KeyValuePair<long,string> _dicMonitId = new KeyValuePair<long, string>();//初始化
+                KeyValuePair<long, string> _dicMonitId = new KeyValuePair<long, string>();//初始化
 
                 #region 获得待监控的列表+当前待上传的monitId
                 lock (this)//锁定查询语句
@@ -1630,9 +1630,9 @@ namespace Easyman.ScriptService.Script
                     {
                         #region 再次验证和清理未在线终端
                         var ipArr = global.ipList.ToArray();
-                        for (int i=0;i<ipArr.Count();i++)
+                        for (int i = 0; i < ipArr.Count(); i++)
                         {
-                            if(Request.PingIP(ipArr[i].Value))
+                            if (Request.PingIP(ipArr[i].Value))
                             {
                                 global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
                             }
@@ -1661,7 +1661,7 @@ namespace Easyman.ScriptService.Script
                                 {
                                     //校验ip
                                     string curIp = dt.Rows[i][1].ToString().Trim();
-                                    if(!string.IsNullOrEmpty(curIp)&& Request.PingIP(curIp))
+                                    if (!string.IsNullOrEmpty(curIp) && Request.PingIP(curIp))
                                     {
                                         //global.list.Add(Convert.ToInt64(dt.Rows[i][0]));//添加到待处理文件集合
                                         //添加到待处理文件集合
@@ -1681,7 +1681,8 @@ namespace Easyman.ScriptService.Script
                             else
                             {
                                 string msg = "未在库中查询到需要拷贝的文件，当前不存在需拷贝文件";
-                                log(msg);
+                                //log(msg);
+                                WriteWarnMessage(msg);
                                 return;
                             }
                         }
@@ -1699,13 +1700,14 @@ namespace Easyman.ScriptService.Script
             }
             catch (Exception ex)
             {
-                log("监控异常：" + ex.Message);
+                //log("监控异常：" + ex.Message);
+                WriteErrorMessage("监控异常：" + ex.Message, 2);//错误信息
             }
         }
         #endregion
 
         #region 自动上传文件--允许指定终端ip和共享目录
-        public void CopyFileToServer(string ip=null, string folder=null)
+        public void CopyFileToServer(string ip = null, string folder = null)
         {
             try
             {
@@ -1750,7 +1752,8 @@ namespace Easyman.ScriptService.Script
                                 if (global.ipList.ContainsValue(ip))
                                 {
                                     string msg = string.Format(@"该监控终端【{0}】未在线，将退出监控。", ip);
-                                    log(msg);//后期将改为警告日志
+                                WriteWarnMessage(msg);
+                                    //log(msg);//后期将改为警告日志
                                     return;
                                 }
                                 else
@@ -1816,7 +1819,8 @@ namespace Easyman.ScriptService.Script
                             else
                             {
                                 string msg = "未在库中查询到需要拷贝的文件，当前" + parMsg + "不存在需拷贝文件";
-                                log(msg);
+                                WriteWarnMessage(msg);
+                                //log(msg);
                                 return;
                             }
                         }
@@ -1837,7 +1841,8 @@ namespace Easyman.ScriptService.Script
             }
             catch (Exception ex)
             {
-                log("监控异常：" + ex.Message);
+                //log("监控异常：" + ex.Message);
+                WriteErrorMessage("监控异常：" + ex.Message, 2);//错误信息
             }
         }
         #endregion
@@ -1855,7 +1860,8 @@ namespace Easyman.ScriptService.Script
                 else
                 {
                     string msg = "未获取到需要拷贝的记录，当前不存在需要拷贝文件";
-                    log(msg);
+                    WriteWarnMessage(msg);
+                    //log(msg);
                     return;
                 }
                 #region 检验文件的ip是否通畅
