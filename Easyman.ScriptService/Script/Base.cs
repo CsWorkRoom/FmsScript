@@ -1665,8 +1665,11 @@ namespace Easyman.ScriptService.Script
                                     {
                                         //global.list.Add(Convert.ToInt64(dt.Rows[i][0]));//添加到待处理文件集合
                                         //添加到待处理文件集合
-                                        global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
-                                        sb.Append(dt.Rows[i][0] + ",");
+                                        if (!global.monitFileIdList.ContainsKey(Convert.ToInt64(dt.Rows[i][0])))
+                                        {
+                                            global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
+                                            sb.Append(dt.Rows[i][0] + ",");
+                                        }
                                     }
                                     else//ip不在线
                                     {
@@ -1803,8 +1806,11 @@ namespace Easyman.ScriptService.Script
                                     {
                                         //global.list.Add(Convert.ToInt64(dt.Rows[i][0]));//添加到待处理文件集合
                                         //添加到待处理文件集合
-                                        global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
-                                        sb.Append(dt.Rows[i][0] + ",");
+                                        if (!global.monitFileIdList.ContainsKey(Convert.ToInt64(dt.Rows[i][0])))
+                                        {
+                                            global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
+                                            sb.Append(dt.Rows[i][0] + ",");
+                                        }
                                     }
                                     else//ip不在线
                                     {
