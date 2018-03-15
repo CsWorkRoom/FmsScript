@@ -31,6 +31,8 @@ namespace Easyman.ScriptService
         /// </summary>
         public enum ReturnCode
         {
+            [Description("【警告】实例执行成功,但存在警告")]
+            Warn = 2,
             [Description("【成功】实例执行成功")]
             Success = 1,
             [Description("【失败】实例执行失败")]

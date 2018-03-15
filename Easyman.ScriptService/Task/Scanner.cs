@@ -137,6 +137,10 @@ namespace Easyman.ScriptService.Task
                     {
                         returnCode = Enums.ReturnCode.Fail;
                     }
+                    else if (kvp.Value.RETURN_CODE == (short)Enums.ReturnCode.Warn)
+                    {
+                        returnCode = Enums.ReturnCode.Warn;
+                    }
                 }
 
                 //记录已经成功完成的节点

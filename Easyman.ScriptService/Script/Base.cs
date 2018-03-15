@@ -34,9 +34,17 @@ namespace Easyman.ScriptService.Script
         /// </summary>
         private bool _isError = false;
         /// <summary>
+        /// 脚本执行中是否有预警
+        /// </summary>
+        private bool _isWarn = false;
+        /// <summary>
         /// 错误信息
         /// </summary>
         private string _errorMessage = string.Empty;
+        /// <summary>
+        /// 预警信息
+        /// </summary>
+        private string _warnMessage = string.Empty;
         /// <summary>
         /// 数据库访问实体
         /// </summary>
@@ -66,6 +74,15 @@ namespace Easyman.ScriptService.Script
         }
 
         /// <summary>
+        /// 获取预警信息
+        /// </summary>
+        /// <returns></returns>
+        public string GetWarnMessage()
+        {
+            return _warnMessage;
+        }
+
+        /// <summary>
         /// 写错误信息
         /// </summary>
         /// <param name="errorMessage">错误信息</param>
@@ -76,6 +93,13 @@ namespace Easyman.ScriptService.Script
             _isError = true;
             _errorMessage = errorMessage + "\r\n本节点中的后续代码，除了写日志之外，将不再执行。";
             log(errorMessage, logLevel, sql);
+        }
+
+        protected void WriteWarnMessage(string warnMessage, int logLevel = 3, string sql = "")
+        {
+            _isWarn = true;
+            _warnMessage = warnMessage;
+            log(warnMessage, logLevel, sql);
         }
 
         /// <summary>
@@ -1401,9 +1425,13 @@ namespace Easyman.ScriptService.Script
             string surl = url + (postData == "" ? "" : "?") + postData;
             log("访问路径:"+surl);
             var mess=Request.GetHttp(url, postData);
-            if (mess.Contains("false"))
+            if (mess.Contains("结果:false"))
             {
                 WriteErrorMessage(mess, 3);
+            }
+            else if (mess.Contains("结果:warn"))
+            {
+                WriteWarnMessage(mess, 3);
             }
             else
             {

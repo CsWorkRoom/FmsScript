@@ -129,11 +129,20 @@ namespace Easyman.ScriptService.Script
                 err.IsError = true;
                 err.Message = errorMsg.ToString();
                 return false;
+            } else 
+            {
+                var warnMsg = objScripRunner.GetType().GetMethod("GetWarnMessage").Invoke(objScripRunner, null);
+                if (string.IsNullOrEmpty(warnMsg.ToString()) == false)
+                {
+                    err.IsError = false;
+                    err.Message = warnMsg.ToString();
+                    err.IsWarn = true;
+                }                
+                return true;
             }
+                
 
             #endregion
-
-            return true;
         }
     }
 }
