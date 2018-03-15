@@ -1619,8 +1619,8 @@ namespace Easyman.ScriptService.Script
                                WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3)
                                      AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
                                      AND ROWNUM <= {2}
-                            ORDER BY A.ID", global.ipList.Count, 
-                            string.Join(",", global.ipList.Keys), Main.MaxUploadCount);
+                            ORDER BY A.ID", global.ipList.Count,
+                            global.ipList.Count == 0 ? "0" : string.Join(",", global.ipList.Keys), Main.MaxUploadCount);
 
                         StringBuilder sb = new StringBuilder();
                         StringBuilder sbNotAlive = new StringBuilder();
@@ -1712,7 +1712,7 @@ namespace Easyman.ScriptService.Script
                                      AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
                                      AND ROWNUM <= {2}
                             ORDER BY A.ID", global.ipList.Count,
-                           string.Join(",", global.ipList.Keys), Main.MaxUploadCount);
+                           global.ipList.Count == 0 ? "0" : string.Join(",", global.ipList.Keys), Main.MaxUploadCount);
                             parMsg = "全域终端";
                         }
                         else
