@@ -33,7 +33,9 @@ namespace Easyman.ScriptService
         /// 允许并行的上传数（默认为10）
         /// </summary>
         public static int MaxUploadCount = 10;
-
+        /// <summary>
+        /// 当前正在上传的数量
+        /// </summary>
         public static int CurUploadCount = 0;
         /// <summary>
         /// 主键是否是自增长（可能已经使用了数据库自带的自增或者通过触发器实现自增，默认为true）
