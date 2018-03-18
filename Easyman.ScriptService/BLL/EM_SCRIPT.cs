@@ -65,6 +65,14 @@ namespace Easyman.ScriptService.BLL
         {
             return GetDictionary("ID", "CRON", "STATUS=? AND IS_DELETE=?", Enums.ScriptStatus.Open.GetHashCode(), Enums.IsDelete.No.GetHashCode());
         }
+        /// <summary>
+        /// 获取所有启用的任务组
+        /// </summary>
+        /// <returns></returns>
+        public IList<Entity> GetEnableList()
+        {
+            return GetList<Entity>("STATUS=? AND IS_DELETE=?", Enums.ScriptStatus.Open.GetHashCode(), Enums.IsDelete.No.GetHashCode());
+        }
 
         /// <summary>
         /// 获取脚本的时间表达式

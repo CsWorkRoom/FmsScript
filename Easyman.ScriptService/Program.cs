@@ -47,6 +47,17 @@ namespace Easyman.ScriptService
         /// </summary>
         public static List<long> list = new List<long>();
 
+        /// <summary>
+        /// 待监控文件列表
+        /// </summary>
+        public static List<KV> monitKVList = new List<KV>();
+
+        /// <summary>
+        /// 未在线ip
+        /// </summary>
+        public static List<KV> ipNotList = new List<KV>();
+
+
         //public static List<string> ipList = new List<string>();
 
         /// <summary>

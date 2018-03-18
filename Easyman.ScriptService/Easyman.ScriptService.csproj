@@ -82,6 +82,7 @@
     <Compile Include="Script\Transfer.cs" />
     <Compile Include="Task\Flow.cs" />
     <Compile Include="Task\Hand.cs" />
+    <Compile Include="Task\KV.cs" />
     <Compile Include="Task\Node.cs" />
     <Compile Include="Task\Scanner.cs" />
     <Compile Include="TestForm.cs">

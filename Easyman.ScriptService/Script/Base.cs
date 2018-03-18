@@ -1621,20 +1621,31 @@ namespace Easyman.ScriptService.Script
             {
                 string sql = "";
                 KeyValuePair<long, string> _dicMonitId = new KeyValuePair<long, string>();//初始化
+                KV kv = new KV();
 
                 #region 获得待监控的列表+当前待上传的monitId
                 lock (this)//锁定查询语句
                 {
                     //当内存中没有数量时，查询待添加的N条记录（来自配置文件的MaxUploadCount）
-                    if (global.monitFileIdList == null || global.monitFileIdList.Count == 0)
+                    if (global.monitKVList == null || global.monitKVList.Count == 0)
+                    //if (global.monitFileIdList == null || global.monitFileIdList.Count == 0)
                     {
                         #region 再次验证和清理未在线终端
-                        var ipArr = global.ipList.ToArray();
-                        for (int i = 0; i < ipArr.Count(); i++)
+                        //var ipArr = global.ipList.ToArray();
+                        //for (int i = 0; i < ipArr.Count(); i++)
+                        //{
+                        //    if (Request.PingIP(ipArr[i].Value)&& global.ipList.ContainsKey(ipArr[i].Key))
+                        //    {
+                        //        global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
+                        //    }
+                        //}
+
+                        if (global.ipNotList != null&&global.ipNotList.Count>0)
                         {
-                            if (Request.PingIP(ipArr[i].Value))
+                            for (int i = global.ipNotList.Count-1; i >= 0; i--)
                             {
-                                global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
+                                if (Request.PingIP(global.ipNotList[i].V))
+                                    global.ipNotList.Remove(global.ipNotList[i]);
                             }
                         }
                         #endregion
@@ -1647,37 +1658,70 @@ namespace Easyman.ScriptService.Script
                                WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3)
                                      AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
                                      AND ROWNUM <= {2}
-                            ORDER BY A.ID", global.ipList.Count,
-                            global.ipList.Count == 0 ? "0" : string.Join(",", global.ipList.Keys), Main.MaxUploadCount);
+                            ORDER BY A.ID", global.ipNotList.Count,
+                            global.ipNotList.Count == 0 ? "0" : string.Join(",", global.ipNotList.Select(p=>p.K).Distinct()), Main.MaxUploadCount);
 
-                        StringBuilder sb = new StringBuilder();
-                        StringBuilder sbNotAlive = new StringBuilder();
+                        StringBuilder sb = new StringBuilder();//待处理
+                        StringBuilder sbNotAlive = new StringBuilder();//未在线
+                        DataTable dt = null;
                         using (BDBHelper dbop = new BDBHelper())
                         {
-                            DataTable dt = dbop.ExecuteDataTable(sql);
+                           dt = dbop.ExecuteDataTable(sql);
+                        }
+                            log("查询出的数量为：【" + dt.Rows.Count + "】");
                             if (dt != null && dt.Rows.Count > 0)
                             {
                                 for (int i = 0; i < dt.Rows.Count; i++)
                                 {
+                                        sb.Append(dt.Rows[i][0] + ",");
                                     //校验ip
                                     string curIp = dt.Rows[i][1].ToString().Trim();
+                                    //log("当前ip【" + curIp + "】");
                                     if (!string.IsNullOrEmpty(curIp) && Request.PingIP(curIp))
                                     {
                                         //global.list.Add(Convert.ToInt64(dt.Rows[i][0]));//添加到待处理文件集合
                                         //添加到待处理文件集合
-                                        if (!global.monitFileIdList.ContainsKey(Convert.ToInt64(dt.Rows[i][0])))
-                                        {
-                                            global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
-                                            sb.Append(dt.Rows[i][0] + ",");
-                                        }
+                                        //if (!global.monitFileIdList.ContainsKey(Convert.ToInt64(dt.Rows[i][0])))
+                                        //{
+                                        //    global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
+                                        //    sb.Append(dt.Rows[i][0] + ",");
+                                        //}
+                                        global.monitKVList.Add(new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
+                                        log("添加k【" + dt.Rows[i][0].ToString() + "】，ip【"+ dt.Rows[i][1].ToString() + "】");
                                     }
                                     else//ip不在线
                                     {
-                                        if (!global.ipList.ContainsValue(dt.Rows[i][1].ToString()))//添加到列表
+                                        var curKv = new KV { K = Convert.ToInt64(dt.Rows[i][2].ToString()), V = dt.Rows[i][1].ToString() };
+                                        //log("不在线ip【"+ dt.Rows[i][1].ToString() + "】");
+                                        if (global.ipNotList.Count > 0)
                                         {
-                                            global.ipList.Add(Convert.ToInt64(dt.Rows[i][2]), dt.Rows[i][1].ToString());
-                                            sbNotAlive.Append(dt.Rows[i][1] + " , ");
+
+                                            if(!global.ipNotList.Contains(curKv))
+                                            {
+                                                global.ipNotList.Add(curKv);
+                                                sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                            }
                                         }
+                                        else
+                                        {
+                                            global.ipNotList.Add(curKv);
+                                            sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                        }
+
+
+                                        //if (global.ipList.Count > 0)//添加到列表
+                                        //{
+                                        //    if (!global.ipList.ContainsValue(dt.Rows[i][1].ToString()))
+                                        //    {
+                                        //        global.ipList.Add(Convert.ToInt64(dt.Rows[i][2].ToString()), dt.Rows[i][1].ToString());
+                                        //        sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                        //    }
+                                        //}
+                                        //else
+                                        //{
+                                        //    global.ipList.Add(Convert.ToInt64(dt.Rows[i][2].ToString()), dt.Rows[i][1].ToString());
+                                        //    sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                        //}
                                     }
                                 }
                             }
@@ -1688,18 +1732,31 @@ namespace Easyman.ScriptService.Script
                                 WriteWarnMessage(msg);
                                 return;
                             }
-                        }
+                        
                         #endregion
 
                         log("内存中无监控的文件列表，从数据库中去获取", string.Format(@"执行查询的sql:\r\n{0}。\r\n查询的结果为：{1}", sql, sb));
-                        log("获取到未在线的ip【" + sbNotAlive + "】,当前未在线的ip列表为【" + string.Join(" , ", global.ipList.Values.ToArray()) + "】");
+                        log("获取到未在线的ip【" + sbNotAlive + "】,当前未在线的ip列表为【" + string.Join(" , ", global.ipNotList.Select(p => p.V)) + "】");
                     }
-                    _dicMonitId = global.monitFileIdList.Last();//从内存中获取元素
-                    global.monitFileIdList.Remove(_dicMonitId.Key);//移除元素
+                    //_dicMonitId = global.monitFileIdList.Last();//从内存中获取元素
+                    //global.monitFileIdList.Remove(_dicMonitId.Key);//移除元素
+                    if (global.monitKVList != null && global.monitKVList.Count > 0)
+                    {
+                        kv = global.monitKVList.Last();
+                        global.monitKVList.Remove(kv);
+                    }
+                    else
+                    {
+                        log("内存中无待监控文件列表");
+                    }
+
                 }
                 #endregion
-
-                UpMonitFile(_dicMonitId);//上传指定的文件到服务器
+                //log("调用[" + kv.K + "],ip[" + kv.V + "]");
+                if(kv!=null&&kv.K>0)
+                {
+                    UpMonitFile(kv);//上传指定的文件到服务器
+                }
             }
             catch (Exception ex)
             {
@@ -1709,160 +1766,160 @@ namespace Easyman.ScriptService.Script
         }
         #endregion
 
-        #region 自动上传文件--允许指定终端ip和共享目录
-        public void CopyFileToServer(string ip = null, string folder = null)
-        {
-            try
-            {
-                string sql = "";
-                KeyValuePair<long, string> _dicMonitId = new KeyValuePair<long, string>();//初始化
+        #region 自动上传文件--允许指定终端ip和共享目录（先注释）
+        //public void CopyFileToServer(string ip = null, string folder = null)
+        //{
+        //    try
+        //    {
+        //        string sql = "";
+        //        KeyValuePair<long, string> _dicMonitId = new KeyValuePair<long, string>();//初始化
 
-                #region 获得待监控的列表+当前待上传的monitId
-                lock (this)//锁定查询语句
-                {
-                    //当内存中没有数量时，查询待添加的N条记录（来自配置文件的MaxUploadCount）
-                    if (global.monitFileIdList == null || global.monitFileIdList.Count == 0)
-                    {
-                        #region 再次验证和清理未在线终端
-                        var ipArr = global.ipList.ToArray();
-                        for (int i = 0; i < ipArr.Count(); i++)
-                        {
-                            if (Request.PingIP(ipArr[i].Value))
-                            {
-                                global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
-                            }
-                        }
-                        #endregion
+        //        #region 获得待监控的列表+当前待上传的monitId
+        //        lock (this)//锁定查询语句
+        //        {
+        //            //当内存中没有数量时，查询待添加的N条记录（来自配置文件的MaxUploadCount）
+        //            if (global.monitFileIdList == null || global.monitFileIdList.Count == 0)
+        //            {
+        //                #region 再次验证和清理未在线终端
+        //                var ipArr = global.ipList.ToArray();
+        //                for (int i = 0; i < ipArr.Count(); i++)
+        //                {
+        //                    if (Request.PingIP(ipArr[i].Value)&& global.ipList.ContainsKey(ipArr[i].Key))
+        //                    {
+        //                        global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
+        //                    }
+        //                }
+        //                #endregion
 
-                        string parMsg = null;
-                        #region 根据传入的参数获取需要的查询sql
-                        if (string.IsNullOrEmpty(ip))//全局监控
-                        {
-                            //获取前MaxUploadCount条记录（排除未在线终端）
-                            sql = string.Format(@"  SELECT A.ID, B.IP, A.COMPUTER_ID
-                                FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
-                               WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3)
-                                     AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
-                                     AND ROWNUM <= {2}
-                            ORDER BY A.ID", global.ipList.Count,
-                           global.ipList.Count == 0 ? "0" : string.Join(",", global.ipList.Keys), Main.MaxUploadCount);
-                            parMsg = "全域终端";
-                        }
-                        else
-                        {
-                            if (string.IsNullOrEmpty(folder))//监控指定ip终端
-                            {
-                                if (global.ipList.ContainsValue(ip))
-                                {
-                                    string msg = string.Format(@"该监控终端【{0}】未在线，将退出监控。", ip);
-                                WriteWarnMessage(msg);
-                                    //log(msg);//后期将改为警告日志
-                                    return;
-                                }
-                                else
-                                {
-                                    //根据终端ip获取待监控的列表
-                                    sql = string.Format(@"SELECT A.ID, B.IP, A.COMPUTER_ID
-                                            FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
-                                           WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3)
-                                                 AND B.IP='{0}'
-                                                 AND ROWNUM <= {1}
-                                        ORDER BY A.ID", ip.Trim(), Main.MaxUploadCount);
-                                    parMsg = "终端【" + ip.Trim() + "】";
-                                }
-                            }
-                            else//监控指定ip终端的指定文件夹
-                            {
-                                sql = string.Format(@"  SELECT A.ID, B.IP, A.COMPUTER_ID
-                                            FROM FM_MONIT_FILE A
-                                                 LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
-                                                 LEFT JOIN FM_FOLDER C ON (A.FOLDER_ID = C.ID)
-                                           WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3)
-                                                 AND B.IP = '{0}'
-                                                 AND C.NAME = '{1}'
-                                                 AND ROWNUM <= {2}
-                                        ORDER BY A.ID", ip.Trim(), folder.Trim(), Main.MaxUploadCount);
-                                parMsg = "终端【" + ip.Trim() + "】共享文件夹【" + folder.Trim() + "】";
-                            }
-                        }
-                        #endregion
+        //                string parMsg = null;
+        //                #region 根据传入的参数获取需要的查询sql
+        //                if (string.IsNullOrEmpty(ip))//全局监控
+        //                {
+        //                    //获取前MaxUploadCount条记录（排除未在线终端）
+        //                    sql = string.Format(@"  SELECT A.ID, B.IP, A.COMPUTER_ID
+        //                        FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
+        //                       WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3)
+        //                             AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
+        //                             AND ROWNUM <= {2}
+        //                    ORDER BY A.ID", global.ipList.Count,
+        //                   global.ipList.Count == 0 ? "0" : string.Join(",", global.ipList.Keys), Main.MaxUploadCount);
+        //                    parMsg = "全域终端";
+        //                }
+        //                else
+        //                {
+        //                    if (string.IsNullOrEmpty(folder))//监控指定ip终端
+        //                    {
+        //                        if (global.ipList.ContainsValue(ip))
+        //                        {
+        //                            string msg = string.Format(@"该监控终端【{0}】未在线，将退出监控。", ip);
+        //                        WriteWarnMessage(msg);
+        //                            //log(msg);//后期将改为警告日志
+        //                            return;
+        //                        }
+        //                        else
+        //                        {
+        //                            //根据终端ip获取待监控的列表
+        //                            sql = string.Format(@"SELECT A.ID, B.IP, A.COMPUTER_ID
+        //                                    FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
+        //                                   WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3)
+        //                                         AND B.IP='{0}'
+        //                                         AND ROWNUM <= {1}
+        //                                ORDER BY A.ID", ip.Trim(), Main.MaxUploadCount);
+        //                            parMsg = "终端【" + ip.Trim() + "】";
+        //                        }
+        //                    }
+        //                    else//监控指定ip终端的指定文件夹
+        //                    {
+        //                        sql = string.Format(@"  SELECT A.ID, B.IP, A.COMPUTER_ID
+        //                                    FROM FM_MONIT_FILE A
+        //                                         LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
+        //                                         LEFT JOIN FM_FOLDER C ON (A.FOLDER_ID = C.ID)
+        //                                   WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3)
+        //                                         AND B.IP = '{0}'
+        //                                         AND C.NAME = '{1}'
+        //                                         AND ROWNUM <= {2}
+        //                                ORDER BY A.ID", ip.Trim(), folder.Trim(), Main.MaxUploadCount);
+        //                        parMsg = "终端【" + ip.Trim() + "】共享文件夹【" + folder.Trim() + "】";
+        //                    }
+        //                }
+        //                #endregion
 
-                        #region 获取MaxUploadCount条待拷贝记录(排除未在线终端)
-                        //采集待插入的文件列表
-                        //采集未在线的终端列表
+        //                #region 获取MaxUploadCount条待拷贝记录(排除未在线终端)
+        //                //采集待插入的文件列表
+        //                //采集未在线的终端列表
 
-                        StringBuilder sb = new StringBuilder();
-                        StringBuilder sbNotAlive = new StringBuilder();
-                        using (BDBHelper dbop = new BDBHelper())
-                        {
-                            DataTable dt = dbop.ExecuteDataTable(sql);//执行sql
-                            if (dt != null && dt.Rows.Count > 0)
-                            {
-                                for (int i = 0; i < dt.Rows.Count; i++)
-                                {
-                                    //校验ip
-                                    string curIp = dt.Rows[i][1].ToString().Trim();
-                                    if (!string.IsNullOrEmpty(curIp) && Request.PingIP(curIp))
-                                    {
-                                        //global.list.Add(Convert.ToInt64(dt.Rows[i][0]));//添加到待处理文件集合
-                                        //添加到待处理文件集合
-                                        if (!global.monitFileIdList.ContainsKey(Convert.ToInt64(dt.Rows[i][0])))
-                                        {
-                                            global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
-                                            sb.Append(dt.Rows[i][0] + ",");
-                                        }
-                                    }
-                                    else//ip不在线
-                                    {
-                                        if (!global.ipList.ContainsValue(dt.Rows[i][1].ToString()))//添加到列表
-                                        {
-                                            global.ipList.Add(Convert.ToInt64(dt.Rows[i][2]), dt.Rows[i][1].ToString());
-                                            sbNotAlive.Append(dt.Rows[i][1] + " , ");
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                string msg = "未在库中查询到需要拷贝的文件，当前" + parMsg + "不存在需拷贝文件";
-                                WriteWarnMessage(msg);
-                                //log(msg);
-                                return;
-                            }
-                        }
-                        #endregion
+        //                StringBuilder sb = new StringBuilder();
+        //                StringBuilder sbNotAlive = new StringBuilder();
+        //                using (BDBHelper dbop = new BDBHelper())
+        //                {
+        //                    DataTable dt = dbop.ExecuteDataTable(sql);//执行sql
+        //                    if (dt != null && dt.Rows.Count > 0)
+        //                    {
+        //                        for (int i = 0; i < dt.Rows.Count; i++)
+        //                        {
+        //                            //校验ip
+        //                            string curIp = dt.Rows[i][1].ToString().Trim();
+        //                            if (!string.IsNullOrEmpty(curIp) && Request.PingIP(curIp))
+        //                            {
+        //                                //global.list.Add(Convert.ToInt64(dt.Rows[i][0]));//添加到待处理文件集合
+        //                                //添加到待处理文件集合
+        //                                if (!global.monitFileIdList.ContainsKey(Convert.ToInt64(dt.Rows[i][0])))
+        //                                {
+        //                                    global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
+        //                                    sb.Append(dt.Rows[i][0] + ",");
+        //                                }
+        //                            }
+        //                            else//ip不在线
+        //                            {
+        //                                if (!global.ipList.ContainsValue(dt.Rows[i][1].ToString()))//添加到列表
+        //                                {
+        //                                    global.ipList.Add(Convert.ToInt64(dt.Rows[i][2]), dt.Rows[i][1].ToString());
+        //                                    sbNotAlive.Append(dt.Rows[i][1] + " , ");
+        //                                }
+        //                            }
+        //                        }
+        //                    }
+        //                    else
+        //                    {
+        //                        string msg = "未在库中查询到需要拷贝的文件，当前" + parMsg + "不存在需拷贝文件";
+        //                        WriteWarnMessage(msg);
+        //                        //log(msg);
+        //                        return;
+        //                    }
+        //                }
+        //                #endregion
 
-                        log("内存中无监控的文件列表，从数据库中去获取", string.Format(@"执行查询的sql:\r\n{0}。\r\n查询的结果为：{1}", sql, sb));
-                        log("获取到未在线的ip【" + sbNotAlive + "】,当前未在线的ip列表为【" + string.Join(" , ", global.ipList.Values.ToArray()) + "】");
-                    }
+        //                log("内存中无监控的文件列表，从数据库中去获取", string.Format(@"执行查询的sql:\r\n{0}。\r\n查询的结果为：{1}", sql, sb));
+        //                log("获取到未在线的ip【" + sbNotAlive + "】,当前未在线的ip列表为【" + string.Join(" , ", global.ipList.Values.ToArray()) + "】");
+        //            }
 
-                    #region 挑选待上传集合中最后一个文件并从集合中移除：_dicMonitId
-                    _dicMonitId = global.monitFileIdList.Last();//从内存中获取元素
-                    global.monitFileIdList.Remove(_dicMonitId.Key);//移除元素
-                    #endregion
-                }
-                #endregion
+        //            #region 挑选待上传集合中最后一个文件并从集合中移除：_dicMonitId
+        //            _dicMonitId = global.monitFileIdList.Last();//从内存中获取元素
+        //            global.monitFileIdList.Remove(_dicMonitId.Key);//移除元素
+        //            #endregion
+        //        }
+        //        #endregion
 
-                UpMonitFile(_dicMonitId);//上传指定的文件_dicMonitId到服务器
-            }
-            catch (Exception ex)
-            {
-                //log("监控异常：" + ex.Message);
-                WriteErrorMessage("监控异常：" + ex.Message, 2);//错误信息
-            }
-        }
+        //        UpMonitFile(_dicMonitId);//上传指定的文件_dicMonitId到服务器
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        //log("监控异常：" + ex.Message);
+        //        WriteErrorMessage("监控异常：" + ex.Message, 2);//错误信息
+        //    }
+        //}
         #endregion
 
         /// <summary>
         /// 上传指定的monitId文件到服务端
         /// </summary>
         /// <param name=""></param>
-        public void UpMonitFile(KeyValuePair<long, string> _dicMonitId)
+        public void UpMonitFile(KV kv)
         {
             try
             {
-                if (_dicMonitId.Key > 0)
-                    log("获得监控文件编号【" + _dicMonitId.Key + "】");
+                if (kv.K > 0)
+                    log("获得监控文件编号【" + kv.K + "】");
                 else
                 {
                     string msg = "未获取到需要拷贝的记录，当前不存在需要拷贝文件";
@@ -1871,30 +1928,31 @@ namespace Easyman.ScriptService.Script
                     return;
                 }
                 #region 检验文件的ip是否通畅
-                if (!Request.PingIP(_dicMonitId.Value))
+                if (!Request.PingIP(kv.V))
                 {
-                    throw new Exception("文件编号【" + _dicMonitId.Key + "】的ip【" + _dicMonitId.Value + "】不在线，未能成功上传。");
+                    throw new Exception("文件编号【" + kv.K + "】的ip【" + kv.V + "】不在线，未能成功上传。");
                 }
                 #endregion
 
                 string api = Librarys.Config.BConfig.GetConfigToString("MonitCopyFileIP");
-                log("开始复制文件，编号【" + _dicMonitId.Key + "】");
+                log("开始复制文件，编号【" + kv.K + "】");
                 log("调用拷贝接口服务，接口地址：\r\n" + api);
                 //开启一个文件的复制
-                string result = Request.GetHttp(api, "monitFileId=" + _dicMonitId.Key);
+                string result = Request.GetHttp(api, "monitFileId=" + kv.K);
                 if (!string.IsNullOrEmpty(result))
                 {
-                    result = "监控文件编号【" + _dicMonitId.Key + "】拷贝失败：" + result;
+                    result = "监控文件编号【" + kv.K + "】拷贝失败：" + result;
                     WriteErrorMessage(result, 2);//错误信息
-                    global.monitFileIdList.Remove(_dicMonitId.Key);
+                    //global.monitFileIdList.Remove(kv.K);
+                    //global.monitKVList.Remove(kv);
                     //log(result, 2);
                     return;
                 }
                 else
                 {
-                    log("监控文件编号【" + _dicMonitId.Key + "】拷贝成功。");
+                    log("监控文件编号【" + kv.K + "】拷贝成功。");
                 }
-                global.monitFileIdList.Remove(_dicMonitId.Key);
+                //global.monitFileIdList.Remove(kv.K);
             }
             catch (Exception ex)
             {

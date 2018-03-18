@@ -54,6 +54,11 @@ namespace Easyman.ScriptService.BLL
             public Nullable<short> IS_SUPERVENE { get; set; }
         }
 
+        public Entity GetCase(long scriptCaseID)
+        {
+            return GetEntity<Entity>("ID=?", scriptCaseID);
+        }
+
         /// <summary>
         /// 更新脚本实例运行状态为“停止”
         /// </summary>

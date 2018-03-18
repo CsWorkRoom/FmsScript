@@ -36,13 +36,13 @@ namespace Easyman.ScriptService.Task
                 return false;
             }
 
-            WriteLog(0, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】即将获取执行中的实例，如果有实例处于运行中，将不会创建新实例。", ID));
+            //WriteLog(0, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】即将获取执行中的实例，如果有实例处于运行中，将不会创建新实例。", ID));
 
             var scr= BLL.EM_SCRIPT.Instance.GetScriptSupervene(ID);
-            WriteLog(0, BLog.LogLevel.DEBUG, string.Format("获取是否为并行任务。"));
+            //WriteLog(0, BLog.LogLevel.DEBUG, string.Format("获取是否为并行任务。"));
             if (scr!=null&&scr.ID>0)
             {
-                WriteLog(0, BLog.LogLevel.DEBUG, string.Format("获取是否为并行任务。" + scr.IS_SUPERVENE.Value));
+                WriteLog(0, BLog.LogLevel.DEBUG, string.Format("获取当前任务组【" + ID + "】为并行任务。"));
                 lock (this)
                 {
                     int curNum = 0;
@@ -53,21 +53,22 @@ namespace Easyman.ScriptService.Task
                         try
                         {
                             //先尝试取之前未完成的节点(排除并发任务组)+执行中的任务实例
-                            BLL.EM_SCRIPT_CASE.Entity scriptCaseEntity = BLL.EM_SCRIPT_CASE.Instance.GetRunningCase(ID);
-                            if (scriptCaseEntity != null)
-                            {
-                                WriteLog(scriptCaseEntity.ID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】找到了之前未运行完成的实例【{1}】，本次任务将不会创建新实例。", ID, scriptCaseEntity.ID));
-                                return false;
-                            }
-                            else
-                            {
+                            //BLL.EM_SCRIPT_CASE.Entity scriptCaseEntity = BLL.EM_SCRIPT_CASE.Instance.GetRunningCase(ID);
+                            //if (scriptCaseEntity != null)
+                            //{
+                            //    WriteLog(scriptCaseEntity.ID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】找到了之前未运行完成的实例【{1}】，本次任务将不会创建新实例。", ID, scriptCaseEntity.ID));
+                            //    return false;
+                            //}
+                            //else
+                            //{
                                 ErrorInfo err = new ErrorInfo();
 
                                 if (CreateScriptCase(ID, ref scriptCaseID, ref err) == true)
                                 {
                                     WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】成功创建了新的实例【{1}】，等待执行。", ID, scriptCaseID));
-                                }
-                                else
+                            Main.CurUploadCount++;
+                            }
+                            else
                                 {
                                     WriteLog(scriptCaseID, BLog.LogLevel.WARN, err.Message);
                                     //标记为失败状态
@@ -77,9 +78,8 @@ namespace Easyman.ScriptService.Task
                                     }
                                     return false;
                                 }
-                            }
+                            //}
 
-                            Main.CurUploadCount++;
 
                             //_dicTaskers.Add(ID, null);
                         }
