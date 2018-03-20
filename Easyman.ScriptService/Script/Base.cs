@@ -1980,7 +1980,7 @@ namespace Easyman.ScriptService.Script
                        B.USER_NAME,
                        B.PWD
                   FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
-                 WHERE A.ID = 1", kv.K);
+                 WHERE A.ID = {0}", kv.K);
                 DataTable dt = null;
                 using (BDBHelper dbop = new BDBHelper())
                 {
@@ -1988,15 +1988,31 @@ namespace Easyman.ScriptService.Script
                 }
                 if (dt != null && dt.Rows.Count > 0)
                 {
-                    string fromPath = dt.Rows[0]["SERVER_PATH"].ToString();
-                    string toPath = dt.Rows[0]["CLIENT_PATH"].ToString();
-                    using (SharedTool tool = new SharedTool(dt.Rows[0]["USER_NAME"].ToString(), dt.Rows[0]["PWD"].ToString(), dt.Rows[0]["IP"].ToString()))
+                    string toPath = dt.Rows[0]["SERVER_PATH"].ToString();
+                    string fromPath = dt.Rows[0]["CLIENT_PATH"].ToString();
+                    string pwd=GetDecryptPwd(dt.Rows[0]["PWD"].ToString());
+                    using (SharedTool tool = new SharedTool(dt.Rows[0]["USER_NAME"].ToString(), pwd, dt.Rows[0]["IP"].ToString()))
                     {
+                        log("文件路径" + fromPath);
+                        log("文件路径" + toPath);
                         if (File.Exists(fromPath))
                         {
                             //File.Copy(fromPath, toPath, true);//从客户端拷贝文件到服务端(覆盖式拷贝)
-                            Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
-                            log("监控文件编号【" + kv.K + "】拷贝成功。");
+                            try
+                            {
+                                Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
+                                log("监控文件编号【" + kv.K + "】拷贝成功。");
+                            }
+                            catch (Exception ex)
+                            {
+                                var result = "监控文件编号【" + kv.K + "】拷贝失败：" + ex.Message;
+                                WriteErrorMessage(result, 2);//错误信息
+                            }
+
+
+                        }
+                        else {
+                            log("文件路径：文件不存在" + fromPath);
                         }
                     }
                 }
@@ -2008,10 +2024,28 @@ namespace Easyman.ScriptService.Script
             }
             catch (Exception ex)
             {
-                log("监控文件编号【" + kv.K + "】拷贝失败。");
+                log("监控文件编号【" + kv.K + "】拷贝失败。"+ex.Message);
             }
 
         }
 
+        /// <summary>
+        /// 获得解密后的密码
+        /// </summary>
+        /// <param name="pwd"></param>
+        /// <returns></returns>
+        private string GetDecryptPwd(string pwd)
+        {
+            string aesPwd = pwd;
+            try
+            {
+                var p = Common.Helper.EncryptHelper.AesDecrpt(pwd);
+                aesPwd = p;
+            }
+            catch
+            {
+            }
+            return aesPwd;
+        }
     }
 }

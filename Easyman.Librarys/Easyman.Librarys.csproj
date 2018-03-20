@@ -70,6 +70,7 @@
     <Compile Include="DBHelper\DBOperator.cs" />
     <Compile Include="DBHelper\Providers\IBMDB2.cs" />
     <Compile Include="DBHelper\Providers\Oracle.cs" />
+    <Compile Include="HttpWebRequest\EncryptHelper.cs" />
     <Compile Include="HttpWebRequest\JSON.cs" />
     <Compile Include="HttpWebRequest\Request.cs" />
     <Compile Include="HttpWebRequest\SharedTool.cs" />
