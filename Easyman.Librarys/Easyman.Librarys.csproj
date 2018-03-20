@@ -72,6 +72,7 @@
     <Compile Include="DBHelper\Providers\Oracle.cs" />
     <Compile Include="HttpWebRequest\JSON.cs" />
     <Compile Include="HttpWebRequest\Request.cs" />
+    <Compile Include="HttpWebRequest\SharedTool.cs" />
     <Compile Include="Log\BLog.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

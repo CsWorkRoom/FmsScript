@@ -16,6 +16,7 @@ using Easyman.Librarys;
 using Easyman.Librarys.ApiRequest;
 using System.Data.SqlClient;
 using System.Collections;
+using Easyman.Common;
 
 namespace Easyman.ScriptService.Script
 {
@@ -1634,15 +1635,15 @@ namespace Easyman.ScriptService.Script
                         //var ipArr = global.ipList.ToArray();
                         //for (int i = 0; i < ipArr.Count(); i++)
                         //{
-                        //    if (Request.PingIP(ipArr[i].Value)&& global.ipList.ContainsKey(ipArr[i].Key))
+                        //    if (Request.PingIP(ipArr[i].Value) && global.ipList.ContainsKey(ipArr[i].Key))
                         //    {
                         //        global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
                         //    }
                         //}
 
-                        if (global.ipNotList != null&&global.ipNotList.Count>0)
+                        if (global.ipNotList != null && global.ipNotList.Count > 0)
                         {
-                            for (int i = global.ipNotList.Count-1; i >= 0; i--)
+                            for (int i = global.ipNotList.Count - 1; i >= 0; i--)
                             {
                                 if (Request.PingIP(global.ipNotList[i].V))
                                     global.ipNotList.Remove(global.ipNotList[i]);
@@ -1659,80 +1660,80 @@ namespace Easyman.ScriptService.Script
                                      AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
                                      AND ROWNUM <= {2}
                             ORDER BY A.ID", global.ipNotList.Count,
-                            global.ipNotList.Count == 0 ? "0" : string.Join(",", global.ipNotList.Select(p=>p.K).Distinct()), Main.MaxUploadCount);
+                            global.ipNotList.Count == 0 ? "0" : string.Join(",", global.ipNotList.Select(p => p.K).Distinct()), Main.MaxUploadCount);
 
                         StringBuilder sb = new StringBuilder();//待处理
                         StringBuilder sbNotAlive = new StringBuilder();//未在线
                         DataTable dt = null;
                         using (BDBHelper dbop = new BDBHelper())
                         {
-                           dt = dbop.ExecuteDataTable(sql);
+                            dt = dbop.ExecuteDataTable(sql);
                         }
-                            log("查询出的数量为：【" + dt.Rows.Count + "】");
-                            if (dt != null && dt.Rows.Count > 0)
+                        log("查询出的数量为：【" + dt.Rows.Count + "】");
+                        if (dt != null && dt.Rows.Count > 0)
+                        {
+                            for (int i = 0; i < dt.Rows.Count; i++)
                             {
-                                for (int i = 0; i < dt.Rows.Count; i++)
+                                sb.Append(dt.Rows[i][0] + ",");
+                                //校验ip
+                                string curIp = dt.Rows[i][1].ToString().Trim();
+                                //log("当前ip【" + curIp + "】");
+                                if (!string.IsNullOrEmpty(curIp) && Request.PingIP(curIp))
                                 {
-                                        sb.Append(dt.Rows[i][0] + ",");
-                                    //校验ip
-                                    string curIp = dt.Rows[i][1].ToString().Trim();
-                                    //log("当前ip【" + curIp + "】");
-                                    if (!string.IsNullOrEmpty(curIp) && Request.PingIP(curIp))
+                                    //global.list.Add(Convert.ToInt64(dt.Rows[i][0]));//添加到待处理文件集合
+                                    //添加到待处理文件集合
+                                    //if (!global.monitFileIdList.ContainsKey(Convert.ToInt64(dt.Rows[i][0])))
+                                    //{
+                                    //    global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
+                                    //    sb.Append(dt.Rows[i][0] + ",");
+                                    //}
+                                    global.monitKVList.Add(new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
+                                    log("添加k【" + dt.Rows[i][0].ToString() + "】，ip【" + dt.Rows[i][1].ToString() + "】");
+                                }
+                                else//ip不在线
+                                {
+                                    var curKv = new KV { K = Convert.ToInt64(dt.Rows[i][2].ToString()), V = dt.Rows[i][1].ToString() };
+                                    //log("不在线ip【"+ dt.Rows[i][1].ToString() + "】");
+                                    if (global.ipNotList.Count > 0)
                                     {
-                                        //global.list.Add(Convert.ToInt64(dt.Rows[i][0]));//添加到待处理文件集合
-                                        //添加到待处理文件集合
-                                        //if (!global.monitFileIdList.ContainsKey(Convert.ToInt64(dt.Rows[i][0])))
-                                        //{
-                                        //    global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
-                                        //    sb.Append(dt.Rows[i][0] + ",");
-                                        //}
-                                        global.monitKVList.Add(new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
-                                        log("添加k【" + dt.Rows[i][0].ToString() + "】，ip【"+ dt.Rows[i][1].ToString() + "】");
-                                    }
-                                    else//ip不在线
-                                    {
-                                        var curKv = new KV { K = Convert.ToInt64(dt.Rows[i][2].ToString()), V = dt.Rows[i][1].ToString() };
-                                        //log("不在线ip【"+ dt.Rows[i][1].ToString() + "】");
-                                        if (global.ipNotList.Count > 0)
-                                        {
 
-                                            if(!global.ipNotList.Contains(curKv))
-                                            {
-                                                global.ipNotList.Add(curKv);
-                                                sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
-                                            }
-                                        }
-                                        else
+                                        if (!global.ipNotList.Contains(curKv))
                                         {
                                             global.ipNotList.Add(curKv);
                                             sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
                                         }
-
-
-                                        //if (global.ipList.Count > 0)//添加到列表
-                                        //{
-                                        //    if (!global.ipList.ContainsValue(dt.Rows[i][1].ToString()))
-                                        //    {
-                                        //        global.ipList.Add(Convert.ToInt64(dt.Rows[i][2].ToString()), dt.Rows[i][1].ToString());
-                                        //        sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
-                                        //    }
-                                        //}
-                                        //else
-                                        //{
-                                        //    global.ipList.Add(Convert.ToInt64(dt.Rows[i][2].ToString()), dt.Rows[i][1].ToString());
-                                        //    sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
-                                        //}
                                     }
+                                    else
+                                    {
+                                        global.ipNotList.Add(curKv);
+                                        sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                    }
+
+
+                                    //if (global.ipList.Count > 0)//添加到列表
+                                    //{
+                                    //    if (!global.ipList.ContainsValue(dt.Rows[i][1].ToString()))
+                                    //    {
+                                    //        global.ipList.Add(Convert.ToInt64(dt.Rows[i][2].ToString()), dt.Rows[i][1].ToString());
+                                    //        sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                    //    }
+                                    //}
+                                    //else
+                                    //{
+                                    //    global.ipList.Add(Convert.ToInt64(dt.Rows[i][2].ToString()), dt.Rows[i][1].ToString());
+                                    //    sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                    //}
                                 }
                             }
-                            else
-                            {
-                                string msg = "未在库中查询到需要拷贝的文件，当前不存在需拷贝文件";
-                                //log(msg);
-                                WriteWarnMessage(msg);
-                                return;
-                            }
-                        
+                        }
+                        else
+                        {
+                            string msg = "未在库中查询到需要拷贝的文件，当前不存在需拷贝文件";
+                            //log(msg);
+                            WriteWarnMessage(msg);
+                            return;
+                        }
+
                         #endregion
 
                         log("内存中无监控的文件列表，从数据库中去获取", string.Format(@"执行查询的sql:\r\n{0}。\r\n查询的结果为：{1}", sql, sb));
@@ -1753,9 +1754,9 @@ namespace Easyman.ScriptService.Script
                 }
                 #endregion
                 //log("调用[" + kv.K + "],ip[" + kv.V + "]");
-                if(kv!=null&&kv.K>0)
+                if (kv != null && kv.K > 0)
                 {
-                    UpMonitFile(kv);//上传指定的文件到服务器
+                    UpMonitFile2(kv);//上传指定的文件到服务器
                 }
             }
             catch (Exception ex)
@@ -1959,5 +1960,58 @@ namespace Easyman.ScriptService.Script
                 throw ex;
             }
         }
+
+        public void UpMonitFile2(KV kv)
+        {
+            try
+            {
+                #region 检验文件的ip是否通畅
+                if (!Request.PingIP(kv.V))
+                {
+                    throw new Exception("文件编号【" + kv.K + "】的ip【" + kv.V + "】不在线，未能成功上传。");
+                }
+                #endregion
+
+                log("获得监控文件编号【" + kv.K + "】,开始进行拷贝");
+                string sql = string.Format(@"SELECT A.SERVER_PATH,
+                       A.CLIENT_PATH,
+                       A.FILE_LIBRARY_ID,
+                       B.IP,
+                       B.USER_NAME,
+                       B.PWD
+                  FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
+                 WHERE A.ID = 1", kv.K);
+                DataTable dt = null;
+                using (BDBHelper dbop = new BDBHelper())
+                {
+                    dt = dbop.ExecuteDataTable(sql);
+                }
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    string fromPath = dt.Rows[0]["SERVER_PATH"].ToString();
+                    string toPath = dt.Rows[0]["CLIENT_PATH"].ToString();
+                    using (SharedTool tool = new SharedTool(dt.Rows[0]["USER_NAME"].ToString(), dt.Rows[0]["PWD"].ToString(), dt.Rows[0]["IP"].ToString()))
+                    {
+                        if (File.Exists(fromPath))
+                        {
+                            //File.Copy(fromPath, toPath, true);//从客户端拷贝文件到服务端(覆盖式拷贝)
+                            Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
+                            log("监控文件编号【" + kv.K + "】拷贝成功。");
+                        }
+                    }
+                }
+                using (BDBHelper dbop = new BDBHelper())
+                {
+                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
+                    dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where id={0}", dt.Rows[0]["FILE_LIBRARY_ID"].ToString()));
+                }
+            }
+            catch (Exception ex)
+            {
+                log("监控文件编号【" + kv.K + "】拷贝失败。");
+            }
+
+        }
+
     }
 }

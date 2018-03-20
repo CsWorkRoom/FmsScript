@@ -42,10 +42,10 @@ namespace Easyman.ScriptService
 
     public class global
     {
-        /// <summary>
-        /// 待上传的文件集合列表
-        /// </summary>
-        public static List<long> list = new List<long>();
+        ///// <summary>
+        ///// 待上传的文件集合列表
+        ///// </summary>
+        //public static List<long> list = new List<long>();
 
         /// <summary>
         /// 待监控文件列表
@@ -60,16 +60,16 @@ namespace Easyman.ScriptService
 
         //public static List<string> ipList = new List<string>();
 
-        /// <summary>
-        /// 未在线的ip集合（需要定期做验证）
-        /// </summary>
-        public static Dictionary<long, string> ipList = new Dictionary<long, string>();
+        ///// <summary>
+        ///// 未在线的ip集合（需要定期做验证）
+        ///// </summary>
+        //public static Dictionary<long, string> ipList = new Dictionary<long, string>();
 
-        /// <summary>
-        /// 待上传的监控文件id集合
-        /// key：monitFileId, value：ip
-        /// </summary>
-        public static Dictionary<long, string> monitFileIdList = new Dictionary<long, string>();
+        ///// <summary>
+        ///// 待上传的监控文件id集合
+        ///// key：monitFileId, value：ip
+        ///// </summary>
+        //public static Dictionary<long, string> monitFileIdList = new Dictionary<long, string>();
 
 
     }
