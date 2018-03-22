@@ -1675,7 +1675,7 @@ namespace Easyman.ScriptService.Script
                             dt = dbop.ExecuteDataTable(sql);
                             if (dt != null && dt.Rows.Count > 0)
                             {
-                                string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=5 where id in({0})",string.Join(",", dt.AsEnumerable().Select(r => r["ID"]).Distinct().ToArray()).TrimEnd(','));
+                                string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=5 where id in({0})", string.Join(",", dt.AsEnumerable().Select(r => r["ID"]).Distinct().ToArray()).TrimEnd(','));
                                 dbop.ExecuteNonQuery(updateSql);
                             }
                         }
@@ -1744,7 +1744,7 @@ namespace Easyman.ScriptService.Script
                             //        dbop.ExecuteNonQuery(updateSql);
                             //    }
                             //}
-                            
+
                         }
                         else
                         {
@@ -1768,7 +1768,7 @@ namespace Easyman.ScriptService.Script
 
                         //lcz 这里暂时写死了的一次获取5个文件来拷贝，你写到配置文件中呢
                         //有可能list中剩余量没有5个了，不知道会不会报错。 这里获取5个终端可以处理下（必须是ip一样的）
-                        kvLs = global.monitKVList.Take(5).ToList();
+                        kvLs = global.monitKVList.Take(Main.EachUploadCount).ToList();
                         global.monitKVList.RemoveAll(p => kvLs.Contains(p));//从内存中移除
                     }
                     else
@@ -1787,8 +1787,14 @@ namespace Easyman.ScriptService.Script
                 //lcz 这里是把同一个ip下的5个文件传到方法里统一拷贝
                 if (kv != null && kvLs.Count > 0)
                 {
+                    var vList = kvLs.Select(p=>p.V).Distinct();
+                    foreach(var v in vList)
+                    {
+                        UpMonitFile3(kvLs.Where(p => p.V == v).ToList());//上传指定的文件到服务器
+                    }
+                    
                     //UpMonitFile2(kv);//上传指定的文件到服务器
-                    UpMonitFile3(kvLs);//上传指定的文件到服务器
+                    //UpMonitFile3(kvLs);//上传指定的文件到服务器
                 }
             }
             catch (Exception ex)
@@ -2022,35 +2028,35 @@ namespace Easyman.ScriptService.Script
                 {
                     string toPath = dt.Rows[0]["SERVER_PATH"].ToString();
                     string fromPath = dt.Rows[0]["CLIENT_PATH"].ToString();
-                    string pwd=GetDecryptPwd(dt.Rows[0]["PWD"].ToString());
+                    string pwd = GetDecryptPwd(dt.Rows[0]["PWD"].ToString());
                     using (SharedTool tool = new SharedTool(dt.Rows[0]["USER_NAME"].ToString(), pwd, dt.Rows[0]["IP"].ToString()))
                     {
                         log("文件路径" + fromPath);
                         log("文件路径" + toPath);
                         //if (File.Exists(@fromPath))
                         //{
-                            //File.Copy(fromPath, toPath, true);//从客户端拷贝文件到服务端(覆盖式拷贝)
-                            try
+                        //File.Copy(fromPath, toPath, true);//从客户端拷贝文件到服务端(覆盖式拷贝)
+                        try
+                        {
+                            Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
+                            log("监控文件编号【" + kv.K + "】拷贝成功。");
+                            using (BDBHelper dbop = new BDBHelper())
                             {
-                                Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
-                                log("监控文件编号【" + kv.K + "】拷贝成功。");
-                                using (BDBHelper dbop = new BDBHelper())
-                                {
-                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
-                                    dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where id={0}", dt.Rows[0]["FILE_LIBRARY_ID"].ToString()));
-                                }
+                                dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
+                                dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where id={0}", dt.Rows[0]["FILE_LIBRARY_ID"].ToString()));
                             }
-                            catch (Exception ex)
+                        }
+                        catch (Exception ex)
+                        {
+                            var result = "监控文件编号【" + kv.K + "】拷贝失败：" + ex.Message;
+                            WriteErrorMessage(result, 2);//错误信息
+                            using (BDBHelper dbop = new BDBHelper())
                             {
-                                var result = "监控文件编号【" + kv.K + "】拷贝失败：" + ex.Message;
-                                WriteErrorMessage(result, 2);//错误信息
-                                using (BDBHelper dbop = new BDBHelper())
-                                {
-                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=3,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
-                                }
+                                dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=3,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
                             }
+                        }
 
-                           
+
                         //}
                         //else
                         //{
@@ -2064,11 +2070,11 @@ namespace Easyman.ScriptService.Script
                         //}
                     }
                 }
-                
+
             }
             catch (Exception ex)
             {
-                log("监控文件编号【" + kv.K + "】拷贝失败。"+ex.Message);
+                log("监控文件编号【" + kv.K + "】拷贝失败。" + ex.Message);
                 using (BDBHelper dbop = new BDBHelper())
                 {
                     dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=3,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
@@ -2090,7 +2096,7 @@ namespace Easyman.ScriptService.Script
                 //}
                 #endregion
 
-                log("获得监控文件编号【" + string.Join(",", kvLs.Select(p => p.K)) + "】,开始进行拷贝");
+                log("获得监控文件编号【" + string.Join(",", kvLs.Select(p => p.K)) + "】,ip【"+ kvLs[0].V + "】开始进行拷贝");
                 string sql = string.Format(@"SELECT A.SERVER_PATH,A.ID,
                        A.CLIENT_PATH,
                        A.FILE_LIBRARY_ID,
@@ -2107,8 +2113,10 @@ namespace Easyman.ScriptService.Script
                 if (dt != null && dt.Rows.Count > 0)
                 {
                     string pwd = GetDecryptPwd(dt.Rows[0]["PWD"].ToString());
-                    
-                    using (SharedTool tool = new SharedTool(dt.Rows[0]["USER_NAME"].ToString(), pwd, dt.Rows[0]["IP"].ToString()))
+                    string user = dt.Rows[0]["USER_NAME"].ToString();
+                    string ip = dt.Rows[0]["IP"].ToString();
+
+                    using (SharedTool tool = new SharedTool(user, pwd, ip))
                     {
                         for (int i = 0; i < dt.Rows.Count; i++)
                         {
@@ -2118,8 +2126,8 @@ namespace Easyman.ScriptService.Script
                             string fromPath = dt.Rows[i]["CLIENT_PATH"].ToString();
 
 
-                            log("文件路径" + fromPath);
-                            log("文件路径" + toPath);
+                            log("文件客户端路径" + fromPath);
+                            log("文件服务端路径" + toPath);
 
 
                             //var kv = kvLs[i];
@@ -2127,6 +2135,7 @@ namespace Easyman.ScriptService.Script
                             {
                                 Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
                                 //log("监控文件编号【" + kv.K + "】拷贝成功。");
+                                log("监控文件【" + dt.Rows[i]["ID"].ToString() + "】拷贝成功。");
                                 using (BDBHelper dbop = new BDBHelper())
                                 {
                                     dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where id= {0}", dt.Rows[i]["ID"].ToString()));
@@ -2138,24 +2147,33 @@ namespace Easyman.ScriptService.Script
                                 //这里要分两种情况：1、文件确实不存在；2、计算机的连接数已满 . lcz处理下
                                 //1、错误内容：已达到计算机的连接数最大值，无法再同此远程计算机连接
                                 //2、错误内容：Could not find file '\\10.0.0.60\Project\xxxx'.
+                                string errMsg = ex.Message;
+                                string copyStatus = "3";
 
-                                var result = "监控文件编号【" + dt.Rows[i]["ID"].ToString() + "】拷贝失败：" + ex.Message;
+                                if (errMsg.Contains("Could not find file"))//无源文件
+                                {
+                                    copyStatus = "4";
+                                }
+                                else//链接数已满或其他未知错误
+                                {
+                                    copyStatus = "3";
+                                }
+
+                                var result = "监控文件编号【" + dt.Rows[i]["ID"].ToString() + "】拷贝失败：" + errMsg;
                                 //WriteErrorMessage(result, 2);//错误信息
                                 WriteWarnMessage(result, 2);
                                 using (BDBHelper dbop = new BDBHelper())
                                 {
-                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=3,COPY_STATUS_TIME=sysdate where id= {0}", dt.Rows[i]["ID"].ToString()));
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS={0},COPY_STATUS_TIME=sysdate where id= {1}",copyStatus, dt.Rows[i]["ID"].ToString()));
                                 }
                             }
                         }
 
-                   
-
-                  
+                        #region 废弃
                         //if (File.Exists(@fromPath))
                         //{
                         //File.Copy(fromPath, toPath, true);//从客户端拷贝文件到服务端(覆盖式拷贝)
-                       
+
 
 
                         //}
@@ -2169,13 +2187,15 @@ namespace Easyman.ScriptService.Script
 
                         //    }
                         //}
+                        #endregion
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                log("拷贝失败:" + ex.Message);
+                string errMsg = "拷贝失败:" + ex.Message;
+                WriteWarnMessage(errMsg, 2);
                 //log("监控文件编号【" + kv.K + "】拷贝失败。" + ex.Message);
                 //using (BDBHelper dbop = new BDBHelper())
                 //{

@@ -35,6 +35,10 @@ namespace Easyman.ScriptService
         /// </summary>
         public static int MaxUploadCount = 10;
         /// <summary>
+        /// 单次从队列获取上传数（默认为5）
+        /// </summary>
+        public static int EachUploadCount = 5;
+        /// <summary>
         /// 当前正在上传的数量
         /// </summary>
         public static int CurUploadCount = 0;
@@ -85,6 +89,8 @@ namespace Easyman.ScriptService
                 }
 
                 MaxUploadCount = BConfig.GetConfigToInt("MaxUploadCount");
+
+                EachUploadCount = BConfig.GetConfigToInt("EachUploadCount");
                 //if (MaxExecuteNodeCount < 1)
                 //{
                 //    MaxExecuteNodeCount = 10;

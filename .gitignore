@@ -9,7 +9,7 @@ packages/
 logs/
 bin/
 obj/
-
+sqlite3/
 
 # Compiled Dynamic libraries
 *.so
