@@ -129,7 +129,7 @@ namespace Easyman.Librarys.ApiRequest
         public static bool CopyFile(string fromPath, string toPath, int eachReadLength)
         {
             //将源文件 读取成文件流
-            FileStream fromFile = new FileStream(fromPath, FileMode.Open, FileAccess.Read);
+            FileStream fromFile = new FileStream(fromPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             //已追加的方式 写入文件流          
             FileStream toFile = new FileStream(toPath, FileMode.Append, FileAccess.Write);
             //实际读取的文件长度

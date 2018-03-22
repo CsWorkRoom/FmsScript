@@ -1656,7 +1656,8 @@ namespace Easyman.ScriptService.Script
                         //采集未在线的终端列表
                         sql = string.Format(@"  SELECT A.ID, B.IP, A.COMPUTER_ID
                                 FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
-                               WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3)
+                                 LEFT JOIN FM_file_FORMAT F ON A.FILE_FORMAT_ID=F.ID
+                               WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3) and F.NAME<>'Folder'
                                      AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
                                      AND ROWNUM <= {2}
                             ORDER BY A.ID", global.ipNotList.Count,
@@ -1668,6 +1669,11 @@ namespace Easyman.ScriptService.Script
                         using (BDBHelper dbop = new BDBHelper())
                         {
                             dt = dbop.ExecuteDataTable(sql);
+                            if (dt != null && dt.Rows.Count > 0)
+                            {
+                                string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=5 where id in({0})",string.Join(",", dt.AsEnumerable().Select(r => r["ID"]).Distinct().ToArray()).TrimEnd(','));
+                                dbop.ExecuteNonQuery(updateSql);
+                            }
                         }
                         log("查询出的数量为：【" + dt.Rows.Count + "】");
                         if (dt != null && dt.Rows.Count > 0)
@@ -1688,7 +1694,7 @@ namespace Easyman.ScriptService.Script
                                     //    sb.Append(dt.Rows[i][0] + ",");
                                     //}
                                     global.monitKVList.Add(new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
-                                    log("添加k【" + dt.Rows[i][0].ToString() + "】，ip【" + dt.Rows[i][1].ToString() + "】");
+                                    //log("添加k【" + dt.Rows[i][0].ToString() + "】，ip【" + dt.Rows[i][1].ToString() + "】");
                                 }
                                 else//ip不在线
                                 {
@@ -1725,6 +1731,16 @@ namespace Easyman.ScriptService.Script
                                     //}
                                 }
                             }
+
+                            //if (sb.Length > 0)
+                            //{
+                            //    string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=5 where id in({0})", sb.ToString().TrimEnd(','));
+                            //    using (BDBHelper dbop = new BDBHelper())
+                            //    {
+                            //        dbop.ExecuteNonQuery(updateSql);
+                            //    }
+                            //}
+                            
                         }
                         else
                         {
@@ -1976,7 +1992,7 @@ namespace Easyman.ScriptService.Script
                 string sql = string.Format(@"SELECT A.SERVER_PATH,
                        A.CLIENT_PATH,
                        A.FILE_LIBRARY_ID,
-                       B.IP,
+                       B.IP, 
                        B.USER_NAME,
                        B.PWD
                   FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
@@ -1995,36 +2011,52 @@ namespace Easyman.ScriptService.Script
                     {
                         log("文件路径" + fromPath);
                         log("文件路径" + toPath);
-                        if (File.Exists(fromPath))
+                        if (File.Exists(@fromPath))
                         {
                             //File.Copy(fromPath, toPath, true);//从客户端拷贝文件到服务端(覆盖式拷贝)
                             try
                             {
                                 Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
                                 log("监控文件编号【" + kv.K + "】拷贝成功。");
+                                using (BDBHelper dbop = new BDBHelper())
+                                {
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where id={0}", dt.Rows[0]["FILE_LIBRARY_ID"].ToString()));
+                                }
                             }
                             catch (Exception ex)
                             {
                                 var result = "监控文件编号【" + kv.K + "】拷贝失败：" + ex.Message;
                                 WriteErrorMessage(result, 2);//错误信息
+                                using (BDBHelper dbop = new BDBHelper())
+                                {
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=3,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
+                                }
                             }
 
-
+                           
                         }
-                        else {
+                        else
+                        {
                             log("文件路径：文件不存在" + fromPath);
+                            WriteErrorMessage("文件路径：文件不存在" + fromPath, 2);//错误信息
+                            using (BDBHelper dbop = new BDBHelper())
+                            {
+                                dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=4,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
+
+                            }
                         }
                     }
                 }
-                using (BDBHelper dbop = new BDBHelper())
-                {
-                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
-                    dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where id={0}", dt.Rows[0]["FILE_LIBRARY_ID"].ToString()));
-                }
+                
             }
             catch (Exception ex)
             {
                 log("监控文件编号【" + kv.K + "】拷贝失败。"+ex.Message);
+                using (BDBHelper dbop = new BDBHelper())
+                {
+                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=3,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
+                }
             }
 
         }

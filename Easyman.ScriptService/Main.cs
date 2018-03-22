@@ -8,6 +8,7 @@ using Easyman.Librarys.Log;
 using System.ComponentModel;
 using System.IO;
 using Easyman.Librarys.Config;
+using Easyman.Librarys.DBHelper;
 
 namespace Easyman.ScriptService
 {
@@ -146,6 +147,13 @@ namespace Easyman.ScriptService
                     {
                         BLL.EM_SCRIPT_CASE.Instance.SetStop(sc.ID, Enums.ReturnCode.Success);
                     }
+                }
+                #endregion
+
+                #region 5回复为0
+                using (BDBHelper dbop = new BDBHelper())
+                {
+                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=0 where COPY_STATUS= 5"));
                 }
                 #endregion
 

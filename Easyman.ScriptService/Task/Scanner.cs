@@ -92,7 +92,8 @@ namespace Easyman.ScriptService.Task
                     WriteLog(scriptCaseID, BLog.LogLevel.ERROR, "扫描并添加待执行节点出现未知错误，错误信息为：" + ex.ToString());
                 }
 
-                Thread.Sleep(3000);
+                //Thread.Sleep(3000);
+                Thread.Sleep(200);
             }
         }
 
