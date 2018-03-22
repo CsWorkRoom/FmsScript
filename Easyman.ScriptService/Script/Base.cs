@@ -1623,6 +1623,7 @@ namespace Easyman.ScriptService.Script
                 string sql = "";
                 KeyValuePair<long, string> _dicMonitId = new KeyValuePair<long, string>();//初始化
                 KV kv = new KV();
+                List<KV> kvLs = new List<KV>();//获取几条
 
                 #region 获得待监控的列表+当前待上传的monitId
                 lock (this)//锁定查询语句
@@ -1654,6 +1655,9 @@ namespace Easyman.ScriptService.Script
                         #region 获取MaxUploadCount条待拷贝记录(排除未在线终端)
                         //采集待插入的文件列表
                         //采集未在线的终端列表
+
+                        //lcz, 这个地方的sql可以只返回同一客户机ip的，便于下面的一个连接多个文件拷贝
+                        //获取不返回一个ip的文件，在从monitKVList中获取5个一样ip的终端去处理
                         sql = string.Format(@"  SELECT A.ID, B.IP, A.COMPUTER_ID
                                 FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
                                  LEFT JOIN FM_file_FORMAT F ON A.FILE_FORMAT_ID=F.ID
@@ -1759,8 +1763,13 @@ namespace Easyman.ScriptService.Script
                     //global.monitFileIdList.Remove(_dicMonitId.Key);//移除元素
                     if (global.monitKVList != null && global.monitKVList.Count > 0)
                     {
-                        kv = global.monitKVList.Last();
-                        global.monitKVList.Remove(kv);
+                        //kv = global.monitKVList.Last();
+                        //global.monitKVList.Remove(kv);
+
+                        //lcz 这里暂时写死了的一次获取5个文件来拷贝，你写到配置文件中呢
+                        //有可能list中剩余量没有5个了，不知道会不会报错。 这里获取5个终端可以处理下（必须是ip一样的）
+                        kvLs = global.monitKVList.Take(5).ToList();
+                        global.monitKVList.RemoveAll(p => kvLs.Contains(p));//从内存中移除
                     }
                     else
                     {
@@ -1770,9 +1779,16 @@ namespace Easyman.ScriptService.Script
                 }
                 #endregion
                 //log("调用[" + kv.K + "],ip[" + kv.V + "]");
-                if (kv != null && kv.K > 0)
+                //if (kv != null && kv.K > 0)
+                //{
+                //    UpMonitFile2(kv);//上传指定的文件到服务器
+                //}
+
+                //lcz 这里是把同一个ip下的5个文件传到方法里统一拷贝
+                if (kv != null && kvLs.Count > 0)
                 {
-                    UpMonitFile2(kv);//上传指定的文件到服务器
+                    //UpMonitFile2(kv);//上传指定的文件到服务器
+                    UpMonitFile3(kvLs);//上传指定的文件到服务器
                 }
             }
             catch (Exception ex)
@@ -2011,8 +2027,8 @@ namespace Easyman.ScriptService.Script
                     {
                         log("文件路径" + fromPath);
                         log("文件路径" + toPath);
-                        if (File.Exists(@fromPath))
-                        {
+                        //if (File.Exists(@fromPath))
+                        //{
                             //File.Copy(fromPath, toPath, true);//从客户端拷贝文件到服务端(覆盖式拷贝)
                             try
                             {
@@ -2035,17 +2051,17 @@ namespace Easyman.ScriptService.Script
                             }
 
                            
-                        }
-                        else
-                        {
-                            log("文件路径：文件不存在" + fromPath);
-                            WriteErrorMessage("文件路径：文件不存在" + fromPath, 2);//错误信息
-                            using (BDBHelper dbop = new BDBHelper())
-                            {
-                                dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=4,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
+                        //}
+                        //else
+                        //{
+                        //    //log("文件路径：文件不存在" + fromPath);
+                        //    WriteErrorMessage("文件路径：文件不存在" + fromPath, 2);//错误信息
+                        //    using (BDBHelper dbop = new BDBHelper())
+                        //    {
+                        //        dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=4,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
 
-                            }
-                        }
+                        //    }
+                        //}
                     }
                 }
                 
@@ -2057,6 +2073,114 @@ namespace Easyman.ScriptService.Script
                 {
                     dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=3,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
                 }
+            }
+
+        }
+
+        //批量拷贝。
+        //这个地方注意kvLs下面的文件应该都是在同一台客户机ip，好用于一个连接多个文件拷贝
+        public void UpMonitFile3(List<KV> kvLs)
+        {
+            try
+            {
+                #region 检验文件的ip是否通畅
+                //if (!Request.PingIP(kvLs[0].V))
+                //{
+                //    throw new Exception("文件编号【" + kvLs[0].K + "】的ip【" + kvLs[0].V + "】不在线，未能成功上传。");
+                //}
+                #endregion
+
+                log("获得监控文件编号【" + string.Join(",", kvLs.Select(p => p.K)) + "】,开始进行拷贝");
+                string sql = string.Format(@"SELECT A.SERVER_PATH,A.ID,
+                       A.CLIENT_PATH,
+                       A.FILE_LIBRARY_ID,
+                       B.IP, 
+                       B.USER_NAME,
+                       B.PWD
+                  FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
+                 WHERE A.ID in ({0})", string.Join(",", kvLs.Select(p => p.K)).TrimEnd(','));
+                DataTable dt = null;
+                using (BDBHelper dbop = new BDBHelper())
+                {
+                    dt = dbop.ExecuteDataTable(sql);
+                }
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    string pwd = GetDecryptPwd(dt.Rows[0]["PWD"].ToString());
+                    
+                    using (SharedTool tool = new SharedTool(dt.Rows[0]["USER_NAME"].ToString(), pwd, dt.Rows[0]["IP"].ToString()))
+                    {
+                        for (int i = 0; i < dt.Rows.Count; i++)
+                        {
+                            log("获得监控文件编号【" + dt.Rows[i]["ID"].ToString() + "】,开始进行拷贝");
+
+                            string toPath = dt.Rows[i]["SERVER_PATH"].ToString();
+                            string fromPath = dt.Rows[i]["CLIENT_PATH"].ToString();
+
+
+                            log("文件路径" + fromPath);
+                            log("文件路径" + toPath);
+
+
+                            //var kv = kvLs[i];
+                            try
+                            {
+                                Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
+                                //log("监控文件编号【" + kv.K + "】拷贝成功。");
+                                using (BDBHelper dbop = new BDBHelper())
+                                {
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where id= {0}", dt.Rows[i]["ID"].ToString()));
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where id={0}", dt.Rows[i]["FILE_LIBRARY_ID"].ToString()));
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                //这里要分两种情况：1、文件确实不存在；2、计算机的连接数已满 . lcz处理下
+                                //1、错误内容：已达到计算机的连接数最大值，无法再同此远程计算机连接
+                                //2、错误内容：Could not find file '\\10.0.0.60\Project\xxxx'.
+
+                                var result = "监控文件编号【" + dt.Rows[i]["ID"].ToString() + "】拷贝失败：" + ex.Message;
+                                //WriteErrorMessage(result, 2);//错误信息
+                                WriteWarnMessage(result, 2);
+                                using (BDBHelper dbop = new BDBHelper())
+                                {
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=3,COPY_STATUS_TIME=sysdate where id= {0}", dt.Rows[i]["ID"].ToString()));
+                                }
+                            }
+                        }
+
+                   
+
+                  
+                        //if (File.Exists(@fromPath))
+                        //{
+                        //File.Copy(fromPath, toPath, true);//从客户端拷贝文件到服务端(覆盖式拷贝)
+                       
+
+
+                        //}
+                        //else
+                        //{
+                        //    //log("文件路径：文件不存在" + fromPath);
+                        //    WriteErrorMessage("文件路径：文件不存在" + fromPath, 2);//错误信息
+                        //    using (BDBHelper dbop = new BDBHelper())
+                        //    {
+                        //        dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=4,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
+
+                        //    }
+                        //}
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                log("拷贝失败:" + ex.Message);
+                //log("监控文件编号【" + kv.K + "】拷贝失败。" + ex.Message);
+                //using (BDBHelper dbop = new BDBHelper())
+                //{
+                //    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=3,COPY_STATUS_TIME=sysdate where id= {0}", kv.K));
+                //}
             }
 
         }
