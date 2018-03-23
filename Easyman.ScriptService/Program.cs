@@ -57,7 +57,91 @@ namespace Easyman.ScriptService
         /// </summary>
         public static List<KV> ipNotList = new List<KV>();
 
+        /// <summary>
+        /// 对不在线终端操作
+        /// </summary>
+        /// <param name="opType"></param>
+        /// <param name="info"></param>
+        /// <returns></returns>
+        public static List<KV> OpIpNotList(string opType, KV info=null)
+        {
+            lock (ipNotList)
+            {
+                if (opType == "add")
+                {
+                    if (!ipNotList.Exists(e => e.K == info.K))                    
+                    {
+                        ipNotList.Add(info);
+                    }
+                    return ipNotList;
 
+                }
+                else if (opType == "remove")
+                {
+                    if (ipNotList.Exists(e => e.K == info.K))
+                    {                        
+                        ipNotList.Remove(info);
+                    }
+                    return ipNotList;
+                }
+                else if (opType == "getall")
+                {
+                    return ipNotList;
+                }
+                else if (opType == "get")
+                {                   
+                        return null;
+                }
+                else
+                {
+                    return ipNotList;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 对文件上传列表进行操作
+        /// </summary>
+        /// <param name="opType"></param>
+        /// <param name="info"></param>
+        /// <returns></returns>
+        public static List<KV> OpMonitKVList(string opType, KV info=null,int num=5)
+        {
+            lock (monitKVList)
+            {
+                if (opType == "add")
+                {
+                    if (!monitKVList.Exists(e => e.K == info.K))
+                    {
+                        monitKVList.Add(info);
+                    }
+                    return monitKVList;
+
+                }
+                else if (opType == "remove")
+                {
+                    if (monitKVList.Contains(info))
+                    {
+                        monitKVList.Remove(info);
+                    }
+                    return monitKVList;
+                }
+                else if (opType == "getall")
+                {
+                    return monitKVList;
+                }
+                else if (opType == "take")
+                {
+                    var  kvLs = global.monitKVList.Take(num).ToList();
+                    monitKVList.RemoveAll(p => kvLs.Contains(p));//从内存中移除
+                    return kvLs;
+                }
+                else
+                {
+                    return monitKVList;
+                }
+            }
+        }
         //public static List<string> ipList = new List<string>();
 
         ///// <summary>

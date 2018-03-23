@@ -1628,8 +1628,10 @@ namespace Easyman.ScriptService.Script
                 #region 获得待监控的列表+当前待上传的monitId
                 lock (this)//锁定查询语句
                 {
+                    log("进入方法");
                     //当内存中没有数量时，查询待添加的N条记录（来自配置文件的MaxUploadCount）
-                    if (global.monitKVList == null || global.monitKVList.Count == 0)
+                    var monitKVLists = global.OpMonitKVList("getall");
+                    if (monitKVLists == null || monitKVLists.Count == 0)
                     //if (global.monitFileIdList == null || global.monitFileIdList.Count == 0)
                     {
                         #region 再次验证和清理未在线终端
@@ -1641,15 +1643,23 @@ namespace Easyman.ScriptService.Script
                         //        global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
                         //    }
                         //}
-
-                        if (global.ipNotList != null && global.ipNotList.Count > 0)
+                        log("检查IP");
+                        var ipNotLists = global.OpIpNotList("getall");
+                        if (ipNotLists != null && ipNotLists.Count > 0)
                         {
-                            for (int i = global.ipNotList.Count - 1; i >= 0; i--)
+                            int cnt = ipNotLists.Count;
+                            for (int i = cnt - 1; i >= 0; i--)
                             {
-                                if (Request.PingIP(global.ipNotList[i].V))
-                                    global.ipNotList.Remove(global.ipNotList[i]);
+                                var item = ipNotLists[i];
+                                if (Request.PingIP(item.V))
+                                {
+                                    global.OpIpNotList("remove", item);
+                                }
                             }
+                            ipNotLists = global.OpIpNotList("getall");
+                           
                         }
+                        log("检查IP完毕");
                         #endregion
 
                         #region 获取MaxUploadCount条待拷贝记录(排除未在线终端)
@@ -1664,8 +1674,8 @@ namespace Easyman.ScriptService.Script
                                WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3) and F.NAME<>'Folder'
                                      AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
                                      AND ROWNUM <= {2}
-                            ORDER BY A.ID", global.ipNotList.Count,
-                            global.ipNotList.Count == 0 ? "0" : string.Join(",", global.ipNotList.Select(p => p.K).Distinct()), Main.MaxUploadCount);
+                            ORDER BY A.ID", ipNotLists.Count,
+                            ipNotLists.Count == 0 ? "0" : string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.MaxUploadCount);
 
                         StringBuilder sb = new StringBuilder();//待处理
                         StringBuilder sbNotAlive = new StringBuilder();//未在线
@@ -1697,25 +1707,25 @@ namespace Easyman.ScriptService.Script
                                     //    global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
                                     //    sb.Append(dt.Rows[i][0] + ",");
                                     //}
-                                    global.monitKVList.Add(new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
+                                    global.OpMonitKVList("add",new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
                                     //log("添加k【" + dt.Rows[i][0].ToString() + "】，ip【" + dt.Rows[i][1].ToString() + "】");
                                 }
                                 else//ip不在线
                                 {
                                     var curKv = new KV { K = Convert.ToInt64(dt.Rows[i][2].ToString()), V = dt.Rows[i][1].ToString() };
                                     //log("不在线ip【"+ dt.Rows[i][1].ToString() + "】");
-                                    if (global.ipNotList.Count > 0)
+                                    if (ipNotLists.Count > 0)
                                     {
 
-                                        if (!global.ipNotList.Contains(curKv))
+                                        if (!ipNotLists.Contains(curKv))
                                         {
-                                            global.ipNotList.Add(curKv);
+                                            global.OpIpNotList("add",curKv);
                                             sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
                                         }
                                     }
                                     else
                                     {
-                                        global.ipNotList.Add(curKv);
+                                        global.OpIpNotList("add",curKv);
                                         sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
                                     }
 
@@ -1761,15 +1771,17 @@ namespace Easyman.ScriptService.Script
                     }
                     //_dicMonitId = global.monitFileIdList.Last();//从内存中获取元素
                     //global.monitFileIdList.Remove(_dicMonitId.Key);//移除元素
-                    if (global.monitKVList != null && global.monitKVList.Count > 0)
+                  
+                    if (monitKVLists != null && monitKVLists.Count > 0)
                     {
                         //kv = global.monitKVList.Last();
                         //global.monitKVList.Remove(kv);
 
                         //lcz 这里暂时写死了的一次获取5个文件来拷贝，你写到配置文件中呢
                         //有可能list中剩余量没有5个了，不知道会不会报错。 这里获取5个终端可以处理下（必须是ip一样的）
-                        kvLs = global.monitKVList.Take(Main.EachUploadCount).ToList();
-                        global.monitKVList.RemoveAll(p => kvLs.Contains(p));//从内存中移除
+                        kvLs = global.OpMonitKVList("take",null, Main.EachUploadCount);
+                        //kvLs = global.monitKVList.Take(Main.EachUploadCount).ToList();
+                        //global.monitKVList.RemoveAll(p => kvLs.Contains(p));//从内存中移除
                     }
                     else
                     {
@@ -2102,7 +2114,8 @@ namespace Easyman.ScriptService.Script
                        A.FILE_LIBRARY_ID,
                        B.IP, 
                        B.USER_NAME,
-                       B.PWD
+                       B.PWD,
+                       A.MD5
                   FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
                  WHERE A.ID in ({0})", string.Join(",", kvLs.Select(p => p.K)).TrimEnd(','));
                 DataTable dt = null;
@@ -2138,7 +2151,7 @@ namespace Easyman.ScriptService.Script
                                 log("监控文件【" + dt.Rows[i]["ID"].ToString() + "】拷贝成功。");
                                 using (BDBHelper dbop = new BDBHelper())
                                 {
-                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where id= {0}", dt.Rows[i]["ID"].ToString()));
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where MD5= '{0}'", dt.Rows[i]["MD5"].ToString()));
                                     dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where id={0}", dt.Rows[i]["FILE_LIBRARY_ID"].ToString()));
                                 }
                             }
@@ -2153,6 +2166,10 @@ namespace Easyman.ScriptService.Script
                                 if (errMsg.Contains("Could not find file"))//无源文件
                                 {
                                     copyStatus = "4";
+                                }
+                                else if (errMsg.Contains("已达到计算机的连接数最大值"))
+                                {
+                                    copyStatus = "0";
                                 }
                                 else//链接数已满或其他未知错误
                                 {
