@@ -1,7 +1,9 @@
 ﻿using Easyman.Librarys.Cron;
+using Easyman.Librarys.DBHelper;
 using Easyman.Librarys.Log;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -43,6 +45,23 @@ namespace Easyman.ScriptService.Task
             if (scr!=null&&scr.ID>0)
             {
                 WriteLog(0, BLog.LogLevel.DEBUG, string.Format("获取当前任务组【" + ID + "】为并行任务。"));
+
+                #region 判断监控文件表中是否有待处理的monit_file. 没有将跳出任务组实例的创建
+                string sql = string.Format(@"select count(1) from FM_MONIT_FILE where COPY_STATUS=0 or COPY_STATUS=3");
+                object obj = null;
+                using (BDBHelper dbop = new BDBHelper())
+                {
+                    obj = dbop.ExecuteScalar(sql);
+                }
+                if (obj != null && Convert.ToInt32(obj) > 0)
+                { }
+                else
+                {
+                    WriteLog(0, BLog.LogLevel.INFO, string.Format("并行任务【自动上传文件】无待上传文件，将不创建任务组实例", ID));
+                    return false;
+                }
+                #endregion
+
                 lock (this)
                 {
                     int curNum = 0;
