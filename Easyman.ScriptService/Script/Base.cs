@@ -2166,6 +2166,21 @@ namespace Easyman.ScriptService.Script
                                 {
                                     copyStatus = "0";
                                 }
+                                //无法向后查找重写先前在附加模式下打开的文件中存在的数据。
+                                //发现问题：报该错误的文件都很大的而且不停在增加，应该是拷贝以分段流的方式引起的错误
+                                //处理方式：先删除服务端相同的md5的文件，在进行复制（等下一波对它的复制）
+                                else if (errMsg.Contains("Unable seek backward to overwrite data that previously existed in a file opened in Append mode"))
+                                {
+                                    File.Delete(toPath);
+                                    log("监控文件编号【" + dt.Rows[i]["ID"].ToString() + "】出现以下错误。系统已从服务端删除文件【" + toPath + "】");
+                                    copyStatus = "3";
+                                }
+                                //because it is being used by another process
+                                else if (errMsg.Contains("because it is being used by another process"))
+                                {
+                                    log("监控文件编号【" + dt.Rows[i]["ID"].ToString() + "】被占用。状态将标注为被占用【6】");
+                                    copyStatus = "6";
+                                }
                                 else//链接数已满或其他未知错误
                                 {
                                     copyStatus = "3";
