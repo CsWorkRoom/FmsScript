@@ -2141,12 +2141,21 @@ namespace Easyman.ScriptService.Script
                             //var kv = kvLs[i];
                             try
                             {
-                                Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
-                                //log("监控文件编号【" + kv.K + "】拷贝成功。");
-                                log("监控文件【" + dt.Rows[i]["ID"].ToString() + "】拷贝成功。");
+                                if(!File.Exists(toPath))//是否已拷贝（否）
+                                {
+                                    Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
+                                    //log("监控文件编号【" + kv.K + "】拷贝成功。");
+                                    log("监控文件【" + dt.Rows[i]["ID"].ToString() + "】拷贝成功。");
+                                }
+                                else
+                                {
+                                    //log("监控文件【" + dt.Rows[i]["ID"].ToString() + "】已被其他线程拷贝至服务端。");
+                                    WriteWarnMessage("监控文件【" + dt.Rows[i]["ID"].ToString() + "】已被其他线程拷贝至服务端。", 2);
+                                }
                                 using (BDBHelper dbop = new BDBHelper())
                                 {
-                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where MD5= '{0}'", dt.Rows[i]["MD5"].ToString()));
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where ID= {0}", dt.Rows[i]["ID"].ToString()));
+                                    //dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where MD5= '{0}'", dt.Rows[i]["MD5"].ToString()));
                                     dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where id={0}", dt.Rows[i]["FILE_LIBRARY_ID"].ToString()));
                                 }
                             }
