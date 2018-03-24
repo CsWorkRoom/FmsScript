@@ -1628,7 +1628,6 @@ namespace Easyman.ScriptService.Script
                 #region 获得待监控的列表+当前待上传的monitId
                 lock (this)//锁定查询语句
                 {
-                    log("进入方法");
                     //当内存中没有数量时，查询待添加的N条记录（来自配置文件的MaxUploadCount）
                     var monitKVLists = global.OpMonitKVList("getall");
                     if (monitKVLists == null || monitKVLists.Count == 0)
@@ -1643,7 +1642,6 @@ namespace Easyman.ScriptService.Script
                         //        global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
                         //    }
                         //}
-                        log("检查IP");
                         var ipNotLists = global.OpIpNotList("getall");
                         if (ipNotLists != null && ipNotLists.Count > 0)
                         {
@@ -1659,7 +1657,6 @@ namespace Easyman.ScriptService.Script
                             ipNotLists = global.OpIpNotList("getall");
                            
                         }
-                        log("检查IP完毕");
                         #endregion
 
                         #region 获取MaxUploadCount条待拷贝记录(排除未在线终端)
@@ -2139,9 +2136,7 @@ namespace Easyman.ScriptService.Script
                             string fromPath = dt.Rows[i]["CLIENT_PATH"].ToString();
 
 
-                            log("文件客户端路径" + fromPath);
-                            log("文件服务端路径" + toPath);
-
+                            log("文件客户端路径:" + fromPath+ ";文件服务端路径:"+ toPath);
 
                             //var kv = kvLs[i];
                             try
