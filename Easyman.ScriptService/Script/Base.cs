@@ -1709,6 +1709,11 @@ namespace Easyman.ScriptService.Script
                                 }
                                 else//ip不在线
                                 {
+                                    using (BDBHelper dbop = new BDBHelper())
+                                    {
+                                        string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=0 where id ={0}", dt.Rows[i][0].ToString());
+                                        dbop.ExecuteNonQuery(updateSql);
+                                    }
                                     var curKv = new KV { K = Convert.ToInt64(dt.Rows[i][2].ToString()), V = dt.Rows[i][1].ToString() };
                                     //log("不在线ip【"+ dt.Rows[i][1].ToString() + "】");
                                     if (ipNotLists.Count > 0)
