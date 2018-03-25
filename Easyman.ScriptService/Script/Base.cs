@@ -1792,10 +1792,12 @@ namespace Easyman.ScriptService.Script
                 //{
                 //    UpMonitFile2(kv);//上传指定的文件到服务器
                 //}
-
+               
                 //lcz 这里是把同一个ip下的5个文件传到方法里统一拷贝
-                if (kv != null && kvLs.Count > 0)
+                if (kvLs.Count > 0)
                 {
+                    log("从内存中获得随机多条文件信息【" + string.Join(",", kvLs.Select(p => p.K)) + "】");
+
                     var vList = kvLs.Select(p=>p.V).Distinct();
                     foreach(var v in vList)
                     {
