@@ -104,13 +104,13 @@ namespace Easyman.ScriptService.BLL
 
         /// <summary>
         /// 获取脚本正在运行中的实例(排除并发的任务组)
-        /// 只获取处于执行中的任务实例(等待中的任务实例排除掉)
+        /// 只获取处于执行中的任务实例(等待中的任务实例排除掉) --- 调整为等待和执行中
         /// </summary>
         /// <param name="scriptID">脚本ID</param>
         /// <returns></returns>
         public Entity GetRunningCase(long scriptID)
         {
-            return GetEntity<Entity>("SCRIPT_ID=? AND RUN_STATUS=? AND IS_SUPERVENE<>?", scriptID, Enums.RunStatus.Excute.GetHashCode(), Enums.IsSupervene.Yes.GetHashCode());
+            return GetEntity<Entity>("SCRIPT_ID=? AND (RUN_STATUS=? OR RUN_STATUS=?)  AND IS_SUPERVENE<>?", scriptID, Enums.RunStatus.Excute.GetHashCode(), Enums.RunStatus.Wait.GetHashCode(), Enums.IsSupervene.Yes.GetHashCode());
             //return GetEntity<Entity>("SCRIPT_ID=? AND RUN_STATUS<>? ", scriptID, Enums.RunStatus.Stop.GetHashCode());
         }
 

@@ -114,6 +114,7 @@ namespace Easyman.ScriptService.Task
         /// <param name="e"></param>
         private void DoWork(object sender, DoWorkEventArgs e)
         {
+            int reTryTimes = 0;//初始化为0
             while (Main.IsRun)
             {
                 try
@@ -127,7 +128,7 @@ namespace Easyman.ScriptService.Task
                         Main.RemoveNodeTask(_nodeCaseEntity.ID);
                         return;
                     }
-                    
+
                     //保存源代码到数据库
                     int i = BLL.EM_SCRIPT_NODE_CASE.Instance.UpdateCompileContent(_nodeCaseEntity.ID, code);
 
@@ -142,7 +143,7 @@ namespace Easyman.ScriptService.Task
                         else
                         {
                             BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Success.GetHashCode());
-                        }                       
+                        }
                         WriteLog(_scriptNodeCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】已经成功执行。预警状态:{4}", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID, err.IsWarn.ToString()));
                         //从内存记录中移除
                         Main.RemoveNodeTask(_nodeCaseEntity.ID);
@@ -150,7 +151,7 @@ namespace Easyman.ScriptService.Task
                     }
 
                     //记录重试次数
-                    int reTryTimes = BLL.EM_SCRIPT_NODE_CASE.Instance.RecordTryTimes(_nodeCaseEntity.ID);
+                    reTryTimes = BLL.EM_SCRIPT_NODE_CASE.Instance.RecordTryTimes(_nodeCaseEntity.ID);
 
                     //超过最大尝试次数
                     if (reTryTimes >= _maxTryTimes)
@@ -159,7 +160,7 @@ namespace Easyman.ScriptService.Task
 
                         BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Fail.GetHashCode());
                         BLL.EM_SCRIPT_CASE.Instance.SetFail(_nodeCaseEntity.SCRIPT_CASE_ID);
-                        Main.CurUploadCount--;
+                        //Main.CurUploadCount--;
 
                         //从内存记录中移除
                         Main.RemoveNodeTask(_nodeCaseEntity.ID);
@@ -173,9 +174,11 @@ namespace Easyman.ScriptService.Task
                 catch (Exception ex)
                 {
                     WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("执行节点实例【{0}】出现了未知异常，错误信息为：\r\n{1}", _scriptNodeCaseID, ex.ToString()));
+                    BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Fail.GetHashCode());
+                    BLL.EM_SCRIPT_CASE.Instance.SetFail(_nodeCaseEntity.SCRIPT_CASE_ID);
                     //从内存记录中移除
                     Main.RemoveNodeTask(_nodeCaseEntity.ID);
-                    Main.CurUploadCount--;
+                    //Main.CurUploadCount--;
                     return;
                 }
             }

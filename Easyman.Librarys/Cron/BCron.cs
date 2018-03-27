@@ -102,7 +102,7 @@ namespace Easyman.Librarys.Cron
                 //执行计划任务
                 Execute(runTime);
                 //执行完休息一秒
-                Thread.Sleep(1000);
+                Thread.Sleep(200);
             }
         }
 

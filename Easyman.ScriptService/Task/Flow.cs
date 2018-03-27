@@ -67,7 +67,7 @@ namespace Easyman.ScriptService.Task
                     int curNum = 0;
                     while (curNum < Main.MaxUploadCount&& Main.CurUploadCount < Main.MaxUploadCount)
                     {
-                        WriteLog(0, BLog.LogLevel.DEBUG, string.Format("curNum{0},MaxUploadCount{1},CurUploadCount{2}。", curNum, Main.MaxUploadCount.ToString(), Main.CurUploadCount));
+                        WriteLog(0, BLog.LogLevel.DEBUG, string.Format("curNum{0},MaxUploadCount{1},已有的上传CurUploadCount{2}。", curNum, Main.MaxUploadCount.ToString(), Main.CurUploadCount));
                         long scriptCaseID = 0;
                         try
                         {
@@ -85,7 +85,7 @@ namespace Easyman.ScriptService.Task
                                 if (CreateScriptCase(ID, ref scriptCaseID, ref err) == true)
                                 {
                                     WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】成功创建了新的实例【{1}】，等待执行。", ID, scriptCaseID));
-                            Main.CurUploadCount++;
+                                Main.CurUploadCount++;
                             }
                             else
                                 {

@@ -101,7 +101,7 @@ namespace Easyman.ScriptService.Task
                             }
                             else
                             {
-                                WriteLog(0, BLog.LogLevel.INFO, "执行手动任务成功。");
+                                WriteLog(0, BLog.LogLevel.INFO, "执行手动任务成功：" + err.Message);
                             }
                         }
                     }
@@ -135,7 +135,9 @@ namespace Easyman.ScriptService.Task
                 BLL.EM_SCRIPT_CASE.Entity scriptCaseEntity = BLL.EM_SCRIPT_CASE.Instance.GetRunningCase(scriptID);
                 if (scriptCaseEntity != null)
                 {
-                    WriteLog(scriptCaseEntity.ID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】找到了之前未运行完成的实例【{1}】，本次手动任务将不会执行。", scriptID, scriptCaseEntity.ID));
+                    string msg = string.Format("脚本流【{0}】找到了之前未运行完成的实例【{1}】，本次手动任务将不会执行。", scriptID, scriptCaseEntity.ID);
+                    WriteLog(scriptCaseEntity.ID, BLog.LogLevel.DEBUG, msg);
+                    err.Message = msg;
 
                     //不用创建实例，不用执行
                     BLL.EM_HAND_RECORD.Instance.SetCancel(id, scriptCaseEntity.ID);

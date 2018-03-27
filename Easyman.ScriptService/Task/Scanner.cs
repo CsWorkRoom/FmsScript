@@ -228,8 +228,9 @@ namespace Easyman.ScriptService.Task
                 {
                     lock (dicAllNodes)
                     {
-                        Main.CurUploadCount--;
-                        WriteLog(0, BLog.LogLevel.DEBUG, string.Format("MaxUploadCount{0},CurUploadCount{1}。", Main.MaxUploadCount.ToString(), Main.CurUploadCount));
+                        if (Main.CurUploadCount > 0)
+                            Main.CurUploadCount--;
+                        WriteLog(0, BLog.LogLevel.DEBUG, string.Format("完成一个并行任务，当前MaxUploadCount{0},CurUploadCount{1}。", Main.MaxUploadCount.ToString(), Main.CurUploadCount));
                     }
                 }
                
