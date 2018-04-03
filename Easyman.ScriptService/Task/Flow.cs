@@ -49,17 +49,50 @@ namespace Easyman.ScriptService.Task
                 {
 
                     #region 判断监控文件表中是否有待处理的monit_file. 没有将跳出任务组实例的创建
-                    string sql = string.Format(@"select count(1) from FM_MONIT_FILE where COPY_STATUS=0 or COPY_STATUS=3");
-                    object obj = null;
+                    //string sql = string.Format(@"select count(1) from FM_MONIT_FILE where COPY_STATUS=0 or COPY_STATUS=3");
+                    #region 再次验证和清理未在线终端
+                    //var ipArr = global.ipList.ToArray();
+                    //for (int i = 0; i < ipArr.Count(); i++)
+                    //{
+                    //    if (Request.PingIP(ipArr[i].Value) && global.ipList.ContainsKey(ipArr[i].Key))
+                    //    {
+                    //        global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
+                    //    }
+                    //}
+                    var ipNotLists = global.OpIpNotList("getall");
+                    if (ipNotLists != null && ipNotLists.Count > 0)
+                    {
+                        int cnt = ipNotLists.Count;
+                        for (int i = cnt - 1; i >= 0; i--)
+                        {
+                            var item = ipNotLists[i];
+                            if (Librarys.ApiRequest.Request.PingIP(item.V))
+                            {
+                                global.OpIpNotList("remove", item);
+                            }
+                        }
+                        ipNotLists = global.OpIpNotList("getall");
+
+                    }
+                    #endregion
+                    string sql = string.Format(@"  SELECT A.ID,A.COMPUTER_ID
+                                FROM FM_MONIT_FILE A
+                                 LEFT JOIN FM_file_FORMAT F ON A.FILE_FORMAT_ID=F.ID
+                               WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3) and F.NAME<>'Folder'
+                                     AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
+                                     AND ROWNUM <= {2}
+                            ORDER BY A.ID", ipNotLists.Count,
+                                   ipNotLists.Count == 0 ? "0" : string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
+                    DataTable dt = null;
                     using (BDBHelper dbop = new BDBHelper())
                     {
-                        obj = dbop.ExecuteScalar(sql);
+                        dt = dbop.ExecuteDataTable(sql);
                     }
-                    if (obj != null && Convert.ToInt32(obj) > 0)
+                    if (dt!=null&&dt.Rows.Count>0)
                     { }
                     else
                     {
-                        WriteLog(0, BLog.LogLevel.INFO, string.Format("并行任务【自动上传文件】无待上传文件，将不创建任务组实例", ID));
+                        WriteLog(0, BLog.LogLevel.INFO, string.Format("并行任务【自动上传文件】无待上传文件，将不创建任务组实例", string.Format("执行的sql语句为：{0}", sql), ID));
                         return false;
                     }
                     #endregion

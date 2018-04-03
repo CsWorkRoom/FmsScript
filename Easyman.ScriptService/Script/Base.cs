@@ -1672,7 +1672,7 @@ namespace Easyman.ScriptService.Script
                                      AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
                                      AND ROWNUM <= {2}
                             ORDER BY A.ID", ipNotLists.Count,
-                            ipNotLists.Count == 0 ? "0" : string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.MaxUploadCount);
+                            ipNotLists.Count == 0 ? "0" : string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
 
                         StringBuilder sb = new StringBuilder();//待处理
                         StringBuilder sbNotAlive = new StringBuilder();//未在线
@@ -1762,7 +1762,7 @@ namespace Easyman.ScriptService.Script
                         {
                             string msg = "未在库中查询到需要拷贝的文件，当前不存在需拷贝文件";
                             //log(msg);
-                            WriteWarnMessage(msg);
+                            WriteWarnMessage(msg, 3, string.Format(@"执行查询的sql:\r\n{0}。", sql));
                             return;
                         }
 

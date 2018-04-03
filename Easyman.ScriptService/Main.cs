@@ -35,6 +35,10 @@ namespace Easyman.ScriptService
         /// </summary>
         public static int MaxUploadCount = 10;
         /// <summary>
+        /// 每次从库中查询出的待处理文件数量（默认50）
+        /// </summary>
+        public static int EachSearchUploadCount = 50;
+        /// <summary>
         /// 单次从队列获取上传数（默认为5）
         /// </summary>
         public static int EachUploadCount = 5;
