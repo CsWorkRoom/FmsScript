@@ -167,6 +167,14 @@ namespace Easyman.ScriptService
                 }
                 #endregion
 
+                #region 重启时删除临时表FM_MONIT_FILE_TEMP_PRO FM_MONIT_FILE_TEMP
+                using (BDBHelper dbop = new BDBHelper())
+                {
+                    dbop.ExecuteNonQuery(string.Format(@"truncate table  FM_MONIT_FILE_TEMP"));
+                    dbop.ExecuteNonQuery(string.Format(@"truncate table  FM_MONIT_FILE_TEMP_PRO"));
+                }
+                #endregion
+
                 //启动手动任务线程
                 Task.Hand.Start();
 

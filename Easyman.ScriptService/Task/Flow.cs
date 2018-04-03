@@ -76,13 +76,35 @@ namespace Easyman.ScriptService.Task
                     }
                     #endregion
                     string sql = string.Format(@"  SELECT A.ID,A.COMPUTER_ID
-                                FROM FM_MONIT_FILE A
-                                 LEFT JOIN FM_file_FORMAT F ON A.FILE_FORMAT_ID=F.ID
-                               WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3) and F.NAME<>'Folder'
-                                     AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
-                                     AND ROWNUM <= {2}
-                            ORDER BY A.ID", ipNotLists.Count,
-                                   ipNotLists.Count == 0 ? "0" : string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
+                                        FROM FM_MONIT_FILE A
+                                             LEFT JOIN FM_FILE_FORMAT F ON A.FILE_FORMAT_ID = F.ID
+                                             LEFT JOIN (    SELECT DISTINCT REGEXP_SUBSTR ('{0}',
+                                                                                           '[^,]+',
+                                                                                           1,
+                                                                                           LEVEL)
+                                                                               AS COMPUTER_ID
+                                                              FROM DUAL
+                                                        CONNECT BY REGEXP_SUBSTR ('{0}',
+                                                                                  '[^,]+',
+                                                                                  1,
+                                                                                  LEVEL)
+                                                                      IS NOT NULL
+                                                          ORDER BY 1) G
+                                                ON A.COMPUTER_ID = G.COMPUTER_ID
+                                       WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3)
+                                             AND F.NAME <> 'Folder'
+                                             AND G.COMPUTER_ID IS NULL
+                                             AND ROWNUM <= {1}
+                                    ORDER BY A.ID", string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
+
+                    //string sql = string.Format(@"  SELECT A.ID,A.COMPUTER_ID
+                    //            FROM FM_MONIT_FILE A
+                    //             LEFT JOIN FM_file_FORMAT F ON A.FILE_FORMAT_ID=F.ID
+                    //           WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3) and F.NAME<>'Folder'
+                    //                 AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
+                    //                 AND ROWNUM <= {2}
+                    //        ORDER BY A.ID", ipNotLists.Count,
+                    //               ipNotLists.Count == 0 ? "0" : string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
                     DataTable dt = null;
                     using (BDBHelper dbop = new BDBHelper())
                     {
@@ -106,6 +128,7 @@ namespace Easyman.ScriptService.Task
                 lock (this)
                 {
                     int curNum = 0;
+                    WriteLog(0, BLog.LogLevel.DEBUG, string.Format("在创建脚本流实例前的判断：curNum{0},MaxUploadCount{1},已CurUploadCount{2}。", curNum, Main.MaxUploadCount.ToString(), Main.CurUploadCount));
                     while (curNum < Main.MaxUploadCount&& Main.CurUploadCount < Main.MaxUploadCount)
                     {
                         WriteLog(0, BLog.LogLevel.DEBUG, string.Format("curNum{0},MaxUploadCount{1},已有的上传CurUploadCount{2}。", curNum, Main.MaxUploadCount.ToString(), Main.CurUploadCount));

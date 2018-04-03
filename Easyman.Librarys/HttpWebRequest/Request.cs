@@ -101,7 +101,7 @@ namespace Easyman.Librarys.ApiRequest
                 objPinOptions.DontFragment = true;
                 string data = "";
                 byte[] buffer = Encoding.UTF8.GetBytes(data);
-                int intTimeout = 120;
+                int intTimeout = 1000;
                 PingReply objPinReply = objPingSender.Send(DoNameOrIP, intTimeout, buffer, objPinOptions);
                 string strInfo = objPinReply.Status.ToString();
                 if (strInfo == "Success")
