@@ -1655,7 +1655,7 @@ namespace Easyman.ScriptService.Script
                                 }
                             }
                             ipNotLists = global.OpIpNotList("getall");
-                           
+
                         }
                         #endregion
 
@@ -1675,7 +1675,8 @@ namespace Easyman.ScriptService.Script
                             ipNotLists.Count == 0 ? "0" : string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
 
                         StringBuilder sb = new StringBuilder();//待处理
-                        StringBuilder sbNotAlive = new StringBuilder();//未在线
+                        //StringBuilder sbNotAlive = new StringBuilder();//未在线
+                        List<string> notAliveList = new List<string>();//当前查询的未在线
                         DataTable dt = null;
                         using (BDBHelper dbop = new BDBHelper())
                         {
@@ -1704,7 +1705,7 @@ namespace Easyman.ScriptService.Script
                                     //    global.monitFileIdList.Add(Convert.ToInt64(dt.Rows[i][0]), dt.Rows[i][1].ToString());
                                     //    sb.Append(dt.Rows[i][0] + ",");
                                     //}
-                                    global.OpMonitKVList("add",new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
+                                    global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
                                     //log("添加k【" + dt.Rows[i][0].ToString() + "】，ip【" + dt.Rows[i][1].ToString() + "】");
                                 }
                                 else//ip不在线
@@ -1721,14 +1722,16 @@ namespace Easyman.ScriptService.Script
 
                                         if (!ipNotLists.Contains(curKv))
                                         {
-                                            global.OpIpNotList("add",curKv);
-                                            sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                            global.OpIpNotList("add", curKv);
+                                            //sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                            notAliveList.Add(dt.Rows[i][1].ToString());
                                         }
                                     }
                                     else
                                     {
-                                        global.OpIpNotList("add",curKv);
-                                        sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                        global.OpIpNotList("add", curKv);
+                                        //sbNotAlive.Append(dt.Rows[i][1].ToString() + " , ");
+                                        notAliveList.Add(dt.Rows[i][1].ToString());
                                     }
 
 
@@ -1769,19 +1772,21 @@ namespace Easyman.ScriptService.Script
                         #endregion
 
                         log("内存中无监控的文件列表，从数据库中去获取", string.Format(@"执行查询的sql:\r\n{0}。\r\n查询的结果为：{1}", sql, sb));
-                        log("获取到未在线的ip【" + sbNotAlive + "】,当前未在线的ip列表为【" + string.Join(" , ", global.ipNotList.Select(p => p.V)) + "】");
+                        log("获取到未在线的ip【" + (notAliveList.Count>0?string.Join(",", notAliveList.Distinct()):"") + "】,当前未在线的ip列表为【" + string.Join(" , ", global.ipNotList.Select(p => p.V)) + "】");
                     }
                     //_dicMonitId = global.monitFileIdList.Last();//从内存中获取元素
                     //global.monitFileIdList.Remove(_dicMonitId.Key);//移除元素
-                  
-                    if (monitKVLists != null && monitKVLists.Count > 0)
+
+                    //var monitKVLists = global.OpMonitKVList("getall");
+                    //if (monitKVLists != null && monitKVLists.Count > 0)
+                    if (global.GetMonitKVCount()>0)
                     {
                         //kv = global.monitKVList.Last();
                         //global.monitKVList.Remove(kv);
 
                         //lcz 这里暂时写死了的一次获取5个文件来拷贝，你写到配置文件中呢
                         //有可能list中剩余量没有5个了，不知道会不会报错。 这里获取5个终端可以处理下（必须是ip一样的）
-                        kvLs = global.OpMonitKVList("take",null, Main.EachUploadCount);
+                        kvLs = global.OpMonitKVList("take", null, Main.EachUploadCount);
                         //kvLs = global.monitKVList.Take(Main.EachUploadCount).ToList();
                         //global.monitKVList.RemoveAll(p => kvLs.Contains(p));//从内存中移除
                     }

@@ -98,7 +98,21 @@ namespace Easyman.ScriptService
                 }
             }
         }
-
+        /// <summary>
+        /// 获取未在线ip数量
+        /// </summary>
+        /// <returns></returns>
+        public static int GetIpNotCount()
+        {
+            lock (ipNotList)
+            {
+                if (ipNotList != null && ipNotList.Count > 0)
+                {
+                    return ipNotList.Count;
+                }
+                else return 0;
+            }
+        }
         /// <summary>
         /// 对文件上传列表进行操作
         /// </summary>
@@ -142,6 +156,22 @@ namespace Easyman.ScriptService
                 }
             }
         }
+        /// <summary>
+        /// 获取待监控文件数量
+        /// </summary>
+        /// <returns></returns>
+        public static int GetMonitKVCount()
+        {
+            lock (monitKVList)
+            {
+                if (monitKVList != null && monitKVList.Count > 0)
+                {
+                    return monitKVList.Count;
+                }
+                else return 0;
+            }
+        }
+
         //public static List<string> ipList = new List<string>();
 
         ///// <summary>
