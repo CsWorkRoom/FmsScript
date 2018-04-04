@@ -94,29 +94,36 @@ namespace Easyman.Librarys.ApiRequest
         /// <returns></returns>
         public static bool PingIP(string DoNameOrIP)
         {
-            try
+            bool res = true;
+            using (Ping objPingSender = new Ping())
             {
-                Ping objPingSender = new Ping();
-                PingOptions objPinOptions = new PingOptions();
-                objPinOptions.DontFragment = true;
-                string data = "";
-                byte[] buffer = Encoding.UTF8.GetBytes(data);
-                int intTimeout = 1000;
-                PingReply objPinReply = objPingSender.Send(DoNameOrIP, intTimeout, buffer, objPinOptions);
-                string strInfo = objPinReply.Status.ToString();
-                if (strInfo == "Success")
+                try
                 {
-                    return true;
+                    PingOptions objPinOptions = new PingOptions();
+                    objPinOptions.DontFragment = true;
+                    string data = "";
+                    byte[] buffer = Encoding.UTF8.GetBytes(data);
+                    int intTimeout = 1000;
+                    PingReply objPinReply = objPingSender.Send(DoNameOrIP, intTimeout, buffer, objPinOptions);
+                    string strInfo = objPinReply.Status.ToString();
+                    if (strInfo == "Success")
+                    {
+                        //objPingSender.Dispose();//释放资源
+                        //return true;
+                    }
+                    else
+                    {
+                        res = false; 
+                        //return false;
+                    }
                 }
-                else
+                catch (Exception)
                 {
-                    return false;
+                    res = false;
+                    //return false;
                 }
             }
-            catch (Exception)
-            {
-                return false;
-            }
+            return res;
         }
 
         /// <summary>
