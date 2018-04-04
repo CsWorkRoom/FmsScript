@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -92,7 +93,7 @@ namespace Easyman.Librarys.ApiRequest
         /// </summary>
         /// <param name="strIpOrDName">输入参数,表示IP地址或域名</param>
         /// <returns></returns>
-        public static bool PingIP(string DoNameOrIP)
+        public static bool OldPingIP(string DoNameOrIP)
         {
             bool res = true;
             using (Ping objPingSender = new Ping())
@@ -126,6 +127,43 @@ namespace Easyman.Librarys.ApiRequest
             return res;
         }
 
+        public static bool PingIP(string ip)
+        {
+            bool res = true;
+            using (Process myProcess = new Process())
+            {
+                try
+                {
+                    myProcess.StartInfo.FileName = "cmd.exe";
+                    myProcess.StartInfo.UseShellExecute = false;
+                    //要重定向 IO 流，Process 对象必须将 UseShellExecute 属性设置为 False。
+                    myProcess.StartInfo.RedirectStandardOutput = true;
+                    myProcess.StartInfo.RedirectStandardInput = true;
+                    myProcess.StartInfo.RedirectStandardError = true;
+                    myProcess.Start();
+                    myProcess.StandardInput.WriteLine("ping " + ip);
+                    myProcess.StandardInput.WriteLine("exit");
+                    string strRst = myProcess.StandardOutput.ReadToEnd();
+
+                    if (strRst.IndexOf("(0% loss)") != -1 || strRst.IndexOf("(0% 丢失)") != -1)
+                    {
+                        //log(string.Format("当前[{0}]在线，已ping通！", ip));
+                    }
+                    else
+                    {
+                        res = false;
+                        //WriteErrorMessage(string.Format("[{0}]不在线，ping不通！", ip), 2);
+                    }
+                    myProcess.Close();
+                }
+                catch (Exception ex)
+                {
+                    //WriteErrorMessage("执行ping命令异常:" + ex.Message, 3);
+                    res = false;
+                }
+            }
+            return res;
+        }
         /// <summary>
         /// 复制大文件
         /// </summary>
