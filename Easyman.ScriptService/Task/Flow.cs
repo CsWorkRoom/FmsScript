@@ -66,7 +66,7 @@ namespace Easyman.ScriptService.Task
                         for (int i = cnt - 1; i >= 0; i--)
                         {
                             var item = ipNotLists[i];
-                            if (Librarys.ApiRequest.Request.PingIP(item.V))
+                            if (Librarys.ApiRequest.Request.OldPingIP(item.V))
                             {
                                 global.OpIpNotList("remove", item);
                             }

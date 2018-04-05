@@ -104,7 +104,7 @@ namespace Easyman.Librarys.ApiRequest
                     objPinOptions.DontFragment = true;
                     string data = "";
                     byte[] buffer = Encoding.UTF8.GetBytes(data);
-                    int intTimeout = 1000;
+                    int intTimeout = 200;
                     PingReply objPinReply = objPingSender.Send(DoNameOrIP, intTimeout, buffer, objPinOptions);
                     string strInfo = objPinReply.Status.ToString();
                     if (strInfo == "Success")
@@ -114,7 +114,7 @@ namespace Easyman.Librarys.ApiRequest
                     }
                     else
                     {
-                        res = false; 
+                        res = false;
                         //return false;
                     }
                 }
@@ -123,6 +123,7 @@ namespace Easyman.Librarys.ApiRequest
                     res = false;
                     //return false;
                 }
+                objPingSender.Dispose();//释放资源
             }
             return res;
         }
@@ -141,7 +142,7 @@ namespace Easyman.Librarys.ApiRequest
                     myProcess.StartInfo.RedirectStandardInput = true;
                     myProcess.StartInfo.RedirectStandardError = true;
                     myProcess.Start();
-                    myProcess.StandardInput.WriteLine("ping " + ip);
+                    myProcess.StandardInput.WriteLine("ping " + ip + " -w 200");
                     myProcess.StandardInput.WriteLine("exit");
                     string strRst = myProcess.StandardOutput.ReadToEnd();
 
