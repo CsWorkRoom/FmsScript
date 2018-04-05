@@ -1613,6 +1613,7 @@ namespace Easyman.ScriptService.Script
         #endregion
 
         #region 拷贝文件
+        private static object symObj = new object();
         /// <summary>
         /// 全局的文件拷贝方法
         /// </summary>
@@ -1631,7 +1632,7 @@ namespace Easyman.ScriptService.Script
                 else
                 {
                     #region 获得待监控的列表+当前待上传的monitId
-                    lock (this)//锁定查询语句
+                    lock (symObj)//锁定查询语句
                     {
                         //当内存中没有数量时，查询待添加的N条记录（来自配置文件的MaxUploadCount）
                         var monitKVLists = global.OpMonitKVList("getall");
