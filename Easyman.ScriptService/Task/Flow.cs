@@ -75,7 +75,7 @@ namespace Easyman.ScriptService.Task
 
                     }
                     #endregion
-                    string sql = string.Format(@"SELECT ID, COMPUTER_ID
+                    string sql = string.Format(@"       SELECT ID, COMPUTER_ID
   FROM (SELECT A.ID, A.COMPUTER_ID, ROW_NUMBER () OVER (ORDER BY A.ID) RN
           FROM FM_MONIT_FILE A
                LEFT JOIN
@@ -87,11 +87,12 @@ namespace Easyman.ScriptService.Task
                       FROM DUAL
                 CONNECT BY REGEXP_SUBSTR ('{0}',
                                           '[^,]+',
-                                          1,
+                                          1,                                          
                                           LEVEL)
                               IS NOT NULL) C
                   ON (A.COMPUTER_ID = C.COMPUTER_ID)
-         WHERE     NVL (C.COMPUTER_ID, 0) = 0
+             LEFT JOIN FM_FILE_FORMAT F ON (F.ID=A.FILE_FORMAT_ID) 
+         WHERE     NVL (C.COMPUTER_ID, 0) = 0  AND F.NAME<>'Folder'
                AND (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3))
  WHERE RN <{1}", string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
 

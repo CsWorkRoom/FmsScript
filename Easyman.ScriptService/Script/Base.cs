@@ -1693,9 +1693,10 @@ namespace Easyman.ScriptService.Script
                                                                                                             LEVEL)
                                                                                                 IS NOT NULL) C
                                                                           ON (A.COMPUTER_ID = C.COMPUTER_ID)
-                                                                 WHERE     NVL (C.COMPUTER_ID, 0) = 0
+                                                                        LEFT JOIN FM_FILE_FORMAT F ON (F.ID=A.FILE_FORMAT_ID)   
+                                                                 WHERE     NVL (C.COMPUTER_ID, 0) = 0 AND F.NAME<>'Folder'
                                                                        AND (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3))
-                                                         WHERE RN < {1}) A
+                                                         WHERE RN <{1}) A
                                                        LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)", string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
 
                             //sql = string.Format(@"  SELECT A.ID, B.IP, A.COMPUTER_ID
