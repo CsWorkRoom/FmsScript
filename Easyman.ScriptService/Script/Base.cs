@@ -1676,24 +1676,27 @@ namespace Easyman.ScriptService.Script
                             //lcz, 这个地方的sql可以只返回同一客户机ip的，便于下面的一个连接多个文件拷贝
                             //获取不返回一个ip的文件，在从monitKVList中获取5个一样ip的终端去处理
                             sql = string.Format(@"SELECT A.ID, B.IP, A.COMPUTER_ID
-                                  FROM (  SELECT A.ID, A.COMPUTER_ID
-                                            FROM FM_MONIT_FILE A
-                                                 LEFT JOIN
-                                                 (    SELECT DISTINCT REGEXP_SUBSTR ('{0}',
-                                                                                     '[^,]+',
-                                                                                     1,
-                                                                                     LEVEL)
-                                                                         AS COMPUTER_ID
-                                                        FROM DUAL
-                                                  CONNECT BY REGEXP_SUBSTR ('{0}',
-                                                                            '[^,]+',
-                                                                            1,
-                                                                            LEVEL)
-                                                                IS NOT NULL) C
-                                                    ON (A.COMPUTER_ID = C.COMPUTER_ID)
-                                           WHERE ROWNUM <= {1} AND NVL (C.COMPUTER_ID, 0) = 0
-                                        ORDER BY A.ID) A
-                                       LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)", string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
+                                                  FROM (SELECT ID, COMPUTER_ID
+                                                          FROM (SELECT A.ID,
+                                                                       A.COMPUTER_ID,
+                                                                       ROW_NUMBER () OVER (ORDER BY A.ID) RN
+                                                                  FROM FM_MONIT_FILE A
+                                                                       LEFT JOIN (    SELECT DISTINCT REGEXP_SUBSTR ('{0}',
+                                                                                                                     '[^,]+',
+                                                                                                                     1,
+                                                                                                                     LEVEL)
+                                                                                                         AS COMPUTER_ID
+                                                                                        FROM DUAL
+                                                                                  CONNECT BY REGEXP_SUBSTR ('{0}',
+                                                                                                            '[^,]+',
+                                                                                                            1,
+                                                                                                            LEVEL)
+                                                                                                IS NOT NULL) C
+                                                                          ON (A.COMPUTER_ID = C.COMPUTER_ID)
+                                                                 WHERE     NVL (C.COMPUTER_ID, 0) = 0
+                                                                       AND (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3))
+                                                         WHERE RN < {1}) A
+                                                       LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)", string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
 
                             //sql = string.Format(@"  SELECT A.ID, B.IP, A.COMPUTER_ID
                             //        FROM FM_MONIT_FILE A LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)
