@@ -95,6 +95,8 @@ namespace Easyman.ScriptService
                 MaxUploadCount = BConfig.GetConfigToInt("MaxUploadCount");
 
                 EachUploadCount = BConfig.GetConfigToInt("EachUploadCount");
+
+                EachSearchUploadCount = BConfig.GetConfigToInt("EachSearchUploadCount");
                 //if (MaxExecuteNodeCount < 1)
                 //{
                 //    MaxExecuteNodeCount = 10;
