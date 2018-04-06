@@ -100,7 +100,7 @@ namespace Easyman.ScriptService.Task
             }
             catch (Exception ex)
             {
-                WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("执行节点实例【{0}】出现了未知异常，错误信息为：\r\n{1}", _scriptNodeCaseID, ex.ToString()));
+                WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("执行节点实例【{0}】出现了未知异常，1错误信息为：\r\n{1}", _scriptNodeCaseID, ex.ToString()));
                 return false;
             }
 
