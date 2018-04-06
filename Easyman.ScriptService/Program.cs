@@ -134,7 +134,7 @@ namespace Easyman.ScriptService
                 }
                 else if (opType == "remove")
                 {
-                    if (monitKVList.Contains(info))
+                    if (monitKVList.Exists(e => e.K == info.K))
                     {
                         monitKVList.Remove(info);
                     }
@@ -147,7 +147,7 @@ namespace Easyman.ScriptService
                 else if (opType == "take")
                 {
                     var  kvLs = global.monitKVList.Take(num).ToList();
-                    monitKVList.RemoveAll(p => kvLs.Contains(p));//从内存中移除
+                    monitKVList.RemoveAll(p => kvLs.Exists(e => e.K == p.K));//从内存中移除
                     return kvLs;
                 }
                 else
