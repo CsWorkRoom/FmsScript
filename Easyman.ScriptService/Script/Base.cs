@@ -2203,6 +2203,11 @@ namespace Easyman.ScriptService.Script
                                 }
                                 else if (errMsg.Contains("已达到计算机的连接数最大值"))
                                 {
+                                    if (File.Exists(toPath))
+                                    {
+                                        File.Delete(toPath);
+                                    }
+
                                     copyStatus = "0";
                                 }
                                 //无法向后查找重写先前在附加模式下打开的文件中存在的数据。
