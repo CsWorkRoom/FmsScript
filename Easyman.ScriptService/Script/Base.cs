@@ -2175,9 +2175,9 @@ namespace Easyman.ScriptService.Script
                                 }
                                 using (BDBHelper dbop = new BDBHelper())
                                 {
-                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where ID= {0}", dt.Rows[i]["ID"].ToString()));
+                                    //dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where ID= {0}", dt.Rows[i]["ID"].ToString()));
                                     //dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where MD5= '{0}'", dt.Rows[i]["MD5"].ToString()));
-                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where ID<>{1} AND MD5= '{0}'", dt.Rows[i]["MD5"].ToString(), dt.Rows[i]["ID"].ToString()));
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where MD5='{0}'", dt.Rows[i]["MD5"].ToString()));
                                     //dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where id={0}", dt.Rows[i]["FILE_LIBRARY_ID"].ToString()));
                                     dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where MD5='{0}'", dt.Rows[i]["MD5"].ToString()));
                                 }
