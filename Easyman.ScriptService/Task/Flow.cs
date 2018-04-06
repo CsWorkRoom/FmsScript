@@ -75,21 +75,22 @@ namespace Easyman.ScriptService.Task
 
                     }
                     #endregion
-                    string sql = string.Format(@"  SELECT A.ID, A.COMPUTER_ID
+                    string sql = string.Format(@" SELECT A.ID, A.COMPUTER_ID
                                 FROM FM_MONIT_FILE A
-                                     LEFT JOIN (    SELECT DISTINCT REGEXP_SUBSTR ('{0}',
-                                                                                   '[^,]+',
-                                                                                   1,
-                                                                                   LEVEL)
-                                                                       AS COMPUTER_ID
-                                                      FROM DUAL
-                                                CONNECT BY REGEXP_SUBSTR ('{0}',
-                                                                          '[^,]+',
-                                                                          1,
-                                                                          LEVEL)
-                                                              IS NOT NULL) C
+                                     LEFT JOIN
+                                     (    SELECT DISTINCT REGEXP_SUBSTR ('{0}',
+                                                                         '[^,]+',
+                                                                         1,
+                                                                         LEVEL)
+                                                             AS COMPUTER_ID
+                                            FROM DUAL
+                                      CONNECT BY REGEXP_SUBSTR ('{0}',
+                                                                '[^,]+',
+                                                                1,
+                                                                LEVEL)
+                                                    IS NOT NULL) C
                                         ON (A.COMPUTER_ID = C.COMPUTER_ID)
-                               WHERE (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3) AND ROWNUM <= {1}
+                               WHERE ROWNUM <= {1} AND NVL (C.COMPUTER_ID, 0) = 0
                             ORDER BY A.ID", string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
 
                     //string sql = string.Format(@"  SELECT A.ID,A.COMPUTER_ID
