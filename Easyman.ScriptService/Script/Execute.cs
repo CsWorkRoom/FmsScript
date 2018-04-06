@@ -63,30 +63,33 @@ namespace Easyman.ScriptService.Script
 
             #endregion
 
-            CSharpCodeProvider objCSharpCodePrivoder = new CSharpCodeProvider();
-            ICodeCompiler objICodeCompiler = objCSharpCodePrivoder.CreateCompiler();
-            CompilerParameters objCompilerParameters = new CompilerParameters();
-            objCompilerParameters.ReferencedAssemblies.Add("System.dll");
-            objCompilerParameters.ReferencedAssemblies.Add("System.Windows.Forms.dll");
-            //objCompilerParameters.ReferencedAssemblies.Add(AppDomain.CurrentDomain.BaseDirectory + "Easyman.Librarys.dll");
-            objCompilerParameters.ReferencedAssemblies.Add(pathServer);
-
-            objCompilerParameters.GenerateExecutable = false;
-            objCompilerParameters.GenerateInMemory = true;
-
-            CompilerResults cr = objICodeCompiler.CompileAssemblyFromSource(objCompilerParameters, code);
-            if (cr.Errors.HasErrors)
+            CompilerResults cr = null;//初始化
+            using (CSharpCodeProvider objCSharpCodePrivoder = new CSharpCodeProvider())
             {
-                StringBuilder sb = new StringBuilder("编译错误：");
-                foreach (CompilerError e in cr.Errors)
-                {
-                    sb.AppendLine(string.Format("行{0}列{1}：{2}\r\n", e.Line - 12, e.Column, e.ErrorText));
-                }
-                err.IsError = true;
-                err.Message = sb.ToString();
-                return null;
-            }
+                ICodeCompiler objICodeCompiler = objCSharpCodePrivoder.CreateCompiler();
+                CompilerParameters objCompilerParameters = new CompilerParameters();
+                objCompilerParameters.ReferencedAssemblies.Add("System.dll");
+                objCompilerParameters.ReferencedAssemblies.Add("System.Windows.Forms.dll");
+                //objCompilerParameters.ReferencedAssemblies.Add(AppDomain.CurrentDomain.BaseDirectory + "Easyman.Librarys.dll");
+                objCompilerParameters.ReferencedAssemblies.Add(pathServer);
 
+                objCompilerParameters.GenerateExecutable = false;
+                objCompilerParameters.GenerateInMemory = true;
+
+                cr = objICodeCompiler.CompileAssemblyFromSource(objCompilerParameters, code);
+                if (cr.Errors.HasErrors)
+                {
+                    StringBuilder sb = new StringBuilder("编译错误：");
+                    foreach (CompilerError e in cr.Errors)
+                    {
+                        sb.AppendLine(string.Format("行{0}列{1}：{2}\r\n", e.Line - 12, e.Column, e.ErrorText));
+                    }
+                    err.IsError = true;
+                    err.Message = sb.ToString();
+                    return null;
+                }
+                objCSharpCodePrivoder.Dispose();//手动释放
+            }
             return cr;
         }
 
@@ -102,7 +105,7 @@ namespace Easyman.ScriptService.Script
             Assembly objAssembly = cr.CompiledAssembly;
             
             object objScripRunner = objAssembly.CreateInstance("Easyman.ScriptService.Script.ScripRunner");
-
+            
             if (objScripRunner == null)
             {
                 err.IsError = true;

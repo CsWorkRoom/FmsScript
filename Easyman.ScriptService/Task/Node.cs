@@ -159,7 +159,7 @@ namespace Easyman.ScriptService.Task
                         WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】的实例【{3}】作了最后一次尝试，仍然执行失败，本脚本流将不再执行。", _nodeCaseEntity.SCRIPT_ID, _nodeCaseEntity.SCRIPT_CASE_ID, _nodeCaseEntity.SCRIPT_NODE_ID, _nodeCaseEntity.ID));
 
                         BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Fail.GetHashCode());
-                        BLL.EM_SCRIPT_CASE.Instance.SetFail(_nodeCaseEntity.SCRIPT_CASE_ID);
+                        //BLL.EM_SCRIPT_CASE.Instance.SetFail(_nodeCaseEntity.SCRIPT_CASE_ID);
                         //Main.CurUploadCount--;
 
                         //从内存记录中移除
@@ -175,7 +175,7 @@ namespace Easyman.ScriptService.Task
                 {
                     WriteLog(_scriptNodeCaseID, BLog.LogLevel.WARN, string.Format("执行节点实例【{0}】出现了未知异常，错误信息为：\r\n{1}", _scriptNodeCaseID, ex.ToString()));
                     BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Fail.GetHashCode());
-                    BLL.EM_SCRIPT_CASE.Instance.SetFail(_nodeCaseEntity.SCRIPT_CASE_ID);
+                    //BLL.EM_SCRIPT_CASE.Instance.SetFail(_nodeCaseEntity.SCRIPT_CASE_ID);
                     //从内存记录中移除
                     Main.RemoveNodeTask(_nodeCaseEntity.ID);
                     //Main.CurUploadCount--;
