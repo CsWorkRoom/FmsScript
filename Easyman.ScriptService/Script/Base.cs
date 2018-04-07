@@ -1625,6 +1625,9 @@ namespace Easyman.ScriptService.Script
                 KeyValuePair<long, string> _dicMonitId = new KeyValuePair<long, string>();//初始化
                 KV kv = new KV();
                 List<KV> kvLs = new List<KV>();//获取几条
+                lock (this)
+                {
+
                 if (global.GetMonitKVCount() > 0)
                 {
                     kvLs = global.OpMonitKVList("take", null, Main.EachUploadCount);
@@ -1805,6 +1808,8 @@ namespace Easyman.ScriptService.Script
 
                     }
                     #endregion
+                }
+
                 }
                 //log("调用[" + kv.K + "],ip[" + kv.V + "]");
                 //if (kv != null && kv.K > 0)
