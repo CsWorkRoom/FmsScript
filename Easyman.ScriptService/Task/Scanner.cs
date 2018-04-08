@@ -73,23 +73,6 @@ namespace Easyman.ScriptService.Task
                 long scriptCaseID = 0;
                 try
                 {
-                    #region 验证是否已经有两个以上的任务,超出将不会执行节点
-                    string sql = string.Format(@"SELECT COUNT (1)
-                          FROM EM_SCRIPT_CASE
-                         WHERE IS_SUPERVENE <> 1 AND RUN_STATUS = 2");
-                    object obj = null;
-                    using (BDBHelper dbop = new BDBHelper())
-                    {
-                        obj = dbop.ExecuteScalar(sql);
-                    }
-                    if (obj != null && Convert.ToInt32(obj) >= Main.MonitFolderCount)
-                    {
-                        WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("当前已监控的任务数为【{0}】,超出或等于限定数量【{1}】，本次将不会创建新实例", obj, Main.MonitFolderCount));
-                        Thread.Sleep(200);
-                        return;
-                    }
-                    #endregion
-
                     IList<BLL.EM_SCRIPT_CASE.Entity> runningCaseList = BLL.EM_SCRIPT_CASE.Instance.GetWaitingCaseList();
                     if (runningCaseList != null && runningCaseList.Count > 0)
                     {
@@ -97,6 +80,27 @@ namespace Easyman.ScriptService.Task
                         foreach (var scriptCase in runningCaseList)
                         {
                             scriptCaseID = scriptCase.ID;
+
+                            if (scriptCase.IS_SUPERVENE != null && scriptCase.IS_SUPERVENE.Value == 0)
+                            {
+                                #region 验证是否已经有两个以上的任务,超出将不会执行节点
+                                string sql = string.Format(@"SELECT COUNT (1)
+                                      FROM EM_SCRIPT_CASE
+                                     WHERE IS_SUPERVENE <> 1 AND RUN_STATUS = 2");
+                                object obj = null;
+                                using (BDBHelper dbop = new BDBHelper())
+                                {
+                                    obj = dbop.ExecuteScalar(sql);
+                                }
+                                if (obj != null && Convert.ToInt32(obj) >= Main.MonitFolderCount)
+                                {
+                                    WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("当前已监控的任务数为【{0}】,超出或等于限定数量【{1}】，本次将不会创建新实例", obj, Main.MonitFolderCount));
+                                    Thread.Sleep(200);
+                                    return;
+                                }
+                                #endregion
+                            }
+
                             ErrorInfo err = new ErrorInfo();
                             BLL.EM_SCRIPT_CASE.Instance.UpdateRunStatus(scriptCaseID, Enums.RunStatus.Excute);//修改状态为执行中
 
