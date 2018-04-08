@@ -179,7 +179,7 @@ namespace Easyman.ScriptService.Task
                     }
                 }
             }
-            else
+            else//非并行
             {
                 #region
                 long scriptCaseID = 0;
@@ -266,8 +266,8 @@ namespace Easyman.ScriptService.Task
                 return false;
             }
             WriteLog(scriptCaseID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】的实例【{1}】成功创建节点顺序实例，共有【{2}】个节点需要按顺序执行。", scriptID, scriptCaseID, nodeList.Count));
-            //修改当前实例的状态为“执行中”
-            BLL.EM_SCRIPT_CASE.Instance.UpdateRunStatus(scriptCaseID, Enums.RunStatus.Excute);
+            //修改当前实例的状态为“等待中”,20180408修改实例的创建为等待(原来为执行中)
+            BLL.EM_SCRIPT_CASE.Instance.UpdateRunStatus(scriptCaseID, Enums.RunStatus.Wait);
 
             //复制节点配置
             List<long> nodeCaseList = BLL.EM_SCRIPT_NODE_FORCASE.Instance.AddCaseReturnList(scriptCaseID, nodeList);
