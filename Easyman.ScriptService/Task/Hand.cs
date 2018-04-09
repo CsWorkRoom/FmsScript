@@ -147,6 +147,7 @@ namespace Easyman.ScriptService.Task
                 {
                     if (Flow.CreateScriptCase(scriptID, ref scriptCaseID, ref err) == true)
                     {
+                        Main.CurMonitCount++;
                         //记录执行的任务ID
                         BLL.EM_HAND_RECORD.Instance.SetCaseID(id, scriptCaseID);
                         WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】成功创建了新的实例【{1}】，等待执行。", scriptID, scriptCaseID));

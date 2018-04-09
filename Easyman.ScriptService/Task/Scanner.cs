@@ -233,6 +233,15 @@ namespace Easyman.ScriptService.Task
                         WriteLog(0, BLog.LogLevel.DEBUG, string.Format("完成一个并行任务，删除后当前MaxUploadCount{0},CurUploadCount{1}。", Main.MaxUploadCount.ToString(), Main.CurUploadCount));
                     }
                 }
+                else
+                {
+                    lock (dicAllNodes)
+                    {
+                        if (Main.CurMonitCount > 0)
+                            Main.CurMonitCount--;
+                        WriteLog(0, BLog.LogLevel.DEBUG, string.Format("完成一个监控任务，删除后当前CurMonitCount{0}", Main.CurMonitCount.ToString()));
+                    }
+                }
                
                 WriteLog(scriptCaseID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】的实例【{1}】所有节点已经执行完成，执行结果【{2}】。", scriptID, scriptCaseID, returnCode.ToString()));
             }

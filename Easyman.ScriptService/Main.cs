@@ -46,6 +46,16 @@ namespace Easyman.ScriptService
         /// 当前正在上传的数量
         /// </summary>
         public static int CurUploadCount = 0;
+
+        /// <summary>
+        /// 当前正在监控的数量
+        /// </summary>
+        public static int CurMonitCount = 0;
+
+        /// <summary>
+        /// 监控的限定的数量（默认为2）
+        /// </summary>
+        public static int MaxMonitCount = 0;
         /// <summary>
         /// 主键是否是自增长（可能已经使用了数据库自带的自增或者通过触发器实现自增，默认为true）
         /// </summary>
@@ -97,6 +107,9 @@ namespace Easyman.ScriptService
                 EachUploadCount = BConfig.GetConfigToInt("EachUploadCount");
 
                 EachSearchUploadCount = BConfig.GetConfigToInt("EachSearchUploadCount");
+
+                MaxMonitCount = BConfig.GetConfigToInt("MaxMonitCount");
+
                 //if (MaxExecuteNodeCount < 1)
                 //{
                 //    MaxExecuteNodeCount = 10;
