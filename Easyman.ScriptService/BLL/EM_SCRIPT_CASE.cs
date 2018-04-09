@@ -124,6 +124,15 @@ namespace Easyman.ScriptService.BLL
         }
 
         /// <summary>
+        /// 获取所有等待的脚本流实例的ID列表
+        /// </summary>
+        /// <returns></returns>
+        public IList<Entity> GetWaitingCaseList()
+        {
+            return GetList<Entity>("RUN_STATUS=?", Enums.RunStatus.Wait.GetHashCode());
+        }
+
+        /// <summary>
         /// 获取所有待执行及执行中脚本流实例的ID列表(并行任务)
         /// </summary>
         /// <returns></returns>
