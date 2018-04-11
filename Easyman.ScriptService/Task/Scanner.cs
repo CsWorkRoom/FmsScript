@@ -1,4 +1,5 @@
-﻿using Easyman.Librarys.Log;
+﻿using Easyman.Librarys.DBHelper;
+using Easyman.Librarys.Log;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -86,6 +87,53 @@ namespace Easyman.ScriptService.Task
                             }
                         }
                     }
+
+                    #region 查询当前非并行执行中的任务实例的数量，如果数量小于MonitFolderCount，则补齐执行中的数量。
+                    //修改等待中的任务为执行中(补齐差量)
+                    string sql = string.Format(@"SELECT COUNT (1)
+                          FROM EM_SCRIPT_CASE
+                         WHERE IS_SUPERVENE <> 1 AND RUN_STATUS = 2");
+                    object obj = null;
+                    using (BDBHelper dbop = new BDBHelper())
+                    {
+                        obj = dbop.ExecuteScalar(sql);//获得执行中的非并行任务数
+                    }
+                    if (obj != null && Convert.ToInt32(obj) < Main.MaxMonitCount)//当执行中的数量小于MaxMonitCount
+                    {
+                        int difCount = Main.MaxMonitCount - Convert.ToInt32(obj);//差量
+                        sql = string.Format(@"SELECT COUNT(1)
+                                FROM (SELECT A.ID,
+                                            ROW_NUMBER () OVER (PARTITION BY TRUNC (ID) ORDER BY ID) RN
+                                        FROM EM_SCRIPT_CASE A WHERE RUN_STATUS = 1)
+                                WHERE RN <= {0}", difCount);
+                        object o2 = null;
+                        using (BDBHelper dbop = new BDBHelper())
+                        {
+                            o2 = dbop.ExecuteScalar(sql);
+                        }
+                        if(o2!=null&& Convert.ToInt32(o2) >0)
+                        {
+                            sql = string.Format(@"MERGE INTO EM_SCRIPT_CASE A
+                                     USING (SELECT ID
+                                              FROM (SELECT ID,
+                                                           ROW_NUMBER ()
+                                                              OVER (PARTITION BY TRUNC (ID) ORDER BY ID)
+                                                              RN
+                                                      FROM EM_SCRIPT_CASE
+                                                     WHERE RUN_STATUS = 1)
+                                             WHERE RN <= {0}) B
+                                        ON (A.ID = B.ID)
+                                WHEN MATCHED
+                                THEN
+                                   UPDATE SET RUN_STATUS = 2", difCount);
+
+                            using (BDBHelper dbop = new BDBHelper())
+                            {
+                                dbop.ExecuteNonQuery(sql);//修改等待的任务为执行中
+                            }
+                        }
+                    }
+                    #endregion
                 }
                 catch (Exception ex)
                 {
@@ -93,7 +141,7 @@ namespace Easyman.ScriptService.Task
                 }
 
                 //Thread.Sleep(3000);
-                Thread.Sleep(200);
+                Thread.Sleep(500);
             }
         }
 

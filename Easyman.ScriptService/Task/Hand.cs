@@ -145,7 +145,7 @@ namespace Easyman.ScriptService.Task
                 }
                 else
                 {
-                    if (Flow.CreateScriptCase(scriptID, ref scriptCaseID, ref err) == true)
+                    if (Flow.CreateScriptCase(scriptID, ref scriptCaseID, ref err,false) == true)
                     {
                         Main.CurMonitCount++;
                         //记录执行的任务ID

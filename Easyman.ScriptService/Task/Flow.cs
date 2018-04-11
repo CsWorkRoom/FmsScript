@@ -181,63 +181,48 @@ namespace Easyman.ScriptService.Task
             }
             else
             {
-                lock (this)
+                #region
+                long scriptCaseID = 0;
+                try
                 {
-                    #region
-                    long scriptCaseID = 0;
-                    try
+                    //先尝试取之前未完成的节点(排除并发任务组)+执行中的任务实例
+                    BLL.EM_SCRIPT_CASE.Entity scriptCaseEntity = BLL.EM_SCRIPT_CASE.Instance.GetRunningCase(ID);
+                    if (scriptCaseEntity != null)
                     {
-                        if (Main.CurMonitCount < Main.MaxMonitCount)//当前上传数量小于限定上传数量时，运行创建节点实例
+                        WriteLog(scriptCaseEntity.ID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】找到了之前未运行完成的实例【{1}】，本次任务将不会创建新实例。", ID, scriptCaseEntity.ID));
+                        return false;
+                    }
+                    else
+                    {
+                        ErrorInfo err = new ErrorInfo();
+
+                        if (CreateScriptCase(ID, ref scriptCaseID, ref err,false) == true)
                         {
-                            WriteLog(scriptCaseID, BLog.LogLevel.WARN, string.Format(@"创建一个监控节点实例,当前执行中的监控量为【{1}】。", Main.MaxMonitCount, Main.CurMonitCount));
-
-                            //先尝试取之前未完成的节点(排除并发任务组)+执行中的任务实例
-                            BLL.EM_SCRIPT_CASE.Entity scriptCaseEntity = BLL.EM_SCRIPT_CASE.Instance.GetRunningCase(ID);
-                            if (scriptCaseEntity != null)
-                            {
-                                WriteLog(scriptCaseEntity.ID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】找到了之前未运行完成的实例【{1}】，本次任务将不会创建新实例。", ID, scriptCaseEntity.ID));
-                                //Main.CurMonitCount++;
-                                return false;
-                            }
-                            else
-                            {
-                                ErrorInfo err = new ErrorInfo();
-
-                                if (CreateScriptCase(ID, ref scriptCaseID, ref err) == true)
-                                {
-                                    WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】成功创建了新的实例【{1}】，等待执行。", ID, scriptCaseID));
-                                    Main.CurMonitCount++;
-                                }
-                                else
-                                {
-                                    WriteLog(scriptCaseID, BLog.LogLevel.WARN, err.Message);
-                                    //标记为失败状态
-                                    if (scriptCaseID > 0)
-                                    {
-                                        BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
-                                    }
-                                    return false;
-                                }
-                            }
+                            WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】成功创建了新的实例【{1}】，等待执行。", ID, scriptCaseID));
                         }
                         else
                         {
-                            //后期注释以下语句
-                            WriteLog(scriptCaseID, BLog.LogLevel.WARN, string.Format(@"允许的并行监控量为【{0}】,当前执行中的监控量为【{1}】。不创建节点实例", Main.MaxMonitCount, Main.CurMonitCount));
+                            WriteLog(scriptCaseID, BLog.LogLevel.WARN, err.Message);
+                            //标记为失败状态
+                            if (scriptCaseID > 0)
+                            {
+                                BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                            }
+                            return false;
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        WriteLog(scriptCaseID, BLog.LogLevel.WARN, "创建脚本流实例发生了未知错误。" + ex.ToString());
-                        //标记为失败状态
-                        if (scriptCaseID > 0)
-                        {
-                            BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
-                        }
-                        return false;
-                    }
-                    #endregion
                 }
+                catch (Exception ex)
+                {
+                    WriteLog(scriptCaseID, BLog.LogLevel.WARN, "创建脚本流实例发生了未知错误。" + ex.ToString());
+                    //标记为失败状态
+                    if (scriptCaseID > 0)
+                    {
+                        BLL.EM_SCRIPT_CASE.Instance.SetFail(scriptCaseID);
+                    }
+                    return false;
+                }
+                #endregion
             }
 
 
@@ -251,7 +236,7 @@ namespace Easyman.ScriptService.Task
         /// <param name="scriptCaseID">脚本流实例ID</param>
         /// <param name="err">错误信息</param>
         /// <returns></returns>
-        public static bool CreateScriptCase(long scriptID, ref long scriptCaseID, ref ErrorInfo err)
+        public static bool CreateScriptCase(long scriptID, ref long scriptCaseID, ref ErrorInfo err,bool isSetRuning=true)
         {
             //创建脚本流实例
             scriptCaseID = BLL.EM_SCRIPT_CASE.Instance.AddReturnCaseID(scriptID);
@@ -282,7 +267,8 @@ namespace Easyman.ScriptService.Task
             }
             WriteLog(scriptCaseID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】的实例【{1}】成功创建节点顺序实例，共有【{2}】个节点需要按顺序执行。", scriptID, scriptCaseID, nodeList.Count));
             //修改当前实例的状态为“执行中”
-            BLL.EM_SCRIPT_CASE.Instance.UpdateRunStatus(scriptCaseID, Enums.RunStatus.Excute);
+            if (isSetRuning)
+                BLL.EM_SCRIPT_CASE.Instance.UpdateRunStatus(scriptCaseID, Enums.RunStatus.Excute);
 
             //复制节点配置
             List<long> nodeCaseList = BLL.EM_SCRIPT_NODE_FORCASE.Instance.AddCaseReturnList(scriptCaseID, nodeList);
