@@ -17,6 +17,8 @@ using Easyman.Librarys.ApiRequest;
 using System.Data.SqlClient;
 using System.Collections;
 using Easyman.Common;
+using RemoteAccess;
+using System.Reflection;
 
 namespace Easyman.ScriptService.Script
 {
@@ -24,7 +26,7 @@ namespace Easyman.ScriptService.Script
     /// 脚本执行基类，包含了对界面自定义函数的定义与实现。
     /// 生成的脚本继承自本类
     /// </summary>
-    public class Base
+    public class Base: RemoteLoaderFactory, IRemoteInterface
     {
         /// <summary>
         /// 脚本节点实例ID
@@ -64,6 +66,11 @@ namespace Easyman.ScriptService.Script
             _scriptNodeCaseID = scriptNodeCaseID;
         }
 
+        //调用动态函数
+        public object Invoke(string strMethod, object[] Parameters)
+        {
+            return this.GetType().InvokeMember(strMethod, BindingFlags.InvokeMethod, null, this, Parameters);
+        }
 
         /// <summary>
         /// 获取错误信息

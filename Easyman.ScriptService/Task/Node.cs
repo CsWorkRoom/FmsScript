@@ -132,7 +132,7 @@ namespace Easyman.ScriptService.Task
                     //保存源代码到数据库
                     int i = BLL.EM_SCRIPT_NODE_CASE.Instance.UpdateCompileContent(_nodeCaseEntity.ID, code);
 
-                    bool isSuccess = Script.Execute.Run(code, _nodeCaseEntity, ref err);
+                    bool isSuccess = Script.Execute.NewRun(code, _nodeCaseEntity, ref err);
                     if (isSuccess)
                     {
                         //结束运行状态

@@ -77,6 +77,7 @@
     <Compile Include="ErrorInfo.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Script\Base.cs" />
+    <Compile Include="Script\RemoteLoaderFactory.cs" />
     <Compile Include="Script\Test.cs" />
     <Compile Include="Script\Execute.cs" />
     <Compile Include="Script\Transfer.cs" />

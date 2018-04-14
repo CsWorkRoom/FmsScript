@@ -7,6 +7,7 @@ using Easyman.Librarys.Log;
 using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using System.Reflection;
+using RemoteAccess;
 
 namespace Easyman.ScriptService.Script
 {
@@ -147,5 +148,175 @@ namespace Easyman.ScriptService.Script
 
             #endregion
         }
+
+        #region 20180414新版动态编辑和方法的调用
+
+        public static bool NewRun(string code, BLL.EM_SCRIPT_NODE_CASE.Entity nodeCase, ref ErrorInfo err)
+        {
+            //动态编译
+            string dllName = NewCompilerClass(code, ref err);
+            if (string.IsNullOrEmpty(dllName))
+            {
+                BLL.EM_SCRIPT_NODE_CASE_LOG.Instance.Add(nodeCase.ID, 3, "节点脚本编译失败：\r\n" + err.Message, code);
+                return false;
+            }
+            BLL.EM_SCRIPT_NODE_CASE_LOG.Instance.Add(nodeCase.ID, 4, "节点脚本编译成功:" + dllName, "");
+
+            //调用必备函数+执行实例代码
+            return NewExcuteScriptCaseCode(dllName, nodeCase, ref err);
+        }
+
+        /// <summary>
+        /// 动态编译类
+        /// </summary>
+        /// <param name="code"></param>
+        /// <param name="err"></param>
+        /// <returns></returns>
+        private static string NewCompilerClass(string code, ref ErrorInfo err)
+        {
+            string assemblyName = "";
+            string pathServer = AppDomain.CurrentDomain.BaseDirectory + "Easyman.ScriptService.exe";
+
+            #region 判断类库是否存在
+
+            if (!System.IO.File.Exists(pathServer))
+            {
+                pathServer = AppDomain.CurrentDomain.BaseDirectory + "Bin\\Easyman.ScriptService.exe";
+            }
+
+            if (!System.IO.File.Exists(pathServer))
+            {
+                err.IsError = true;
+                err.Message = string.Format("类库【{0}】不存在", pathServer);
+                return null;
+            }
+
+            #endregion
+
+            using (CSharpCodeProvider objCSharpCodePrivoder = new CSharpCodeProvider())
+            {
+                //生成程序集名(动态)
+                string assemblyNameTemp = AppDomain.CurrentDomain.BaseDirectory + "dlls\\DynamicalCode_" + DateTime.Now.Ticks + ".dll";
+
+                //ICodeCompiler objICodeCompiler = objCSharpCodePrivoder.CreateCompiler();
+                CompilerParameters objCompilerParameters = new CompilerParameters();
+                objCompilerParameters.ReferencedAssemblies.Add("System.dll");
+                objCompilerParameters.ReferencedAssemblies.Add("System.Windows.Forms.dll");
+
+                //objCompilerParameters.ReferencedAssemblies.Add(AppDomain.CurrentDomain.BaseDirectory + "Easyman.Librarys.dll");
+                objCompilerParameters.ReferencedAssemblies.Add(pathServer);
+
+                //objCompilerParameters.GenerateExecutable = false;
+                objCompilerParameters.GenerateInMemory = false;
+                objCompilerParameters.OutputAssembly = assemblyNameTemp;
+
+                CompilerResults cr = objCSharpCodePrivoder.CompileAssemblyFromSource(objCompilerParameters, code);
+                if (cr.Errors.HasErrors)
+                {
+                    StringBuilder sb = new StringBuilder("编译错误：");
+                    foreach (CompilerError e in cr.Errors)
+                    {
+                        sb.AppendLine(string.Format("行{0}列{1}：{2}\r\n", e.Line - 12, e.Column, e.ErrorText));
+                    }
+                    err.IsError = true;
+                    err.Message = sb.ToString();
+
+                    //return null;
+                }
+                else
+                {
+                    assemblyName = assemblyNameTemp;//赋值返回变量
+                }
+                objCSharpCodePrivoder.Dispose();//手动释放
+            }
+            return assemblyName;
+        }
+
+        public static bool NewExcuteScriptCaseCode(string dllName, BLL.EM_SCRIPT_NODE_CASE.Entity nodeCase, ref ErrorInfo err)
+        {
+            bool resBool = true;
+
+            AppDomain objAppDomain = null;
+            IRemoteInterface objRemote = null;
+            try
+            {   
+                // 0. Create an addtional AppDomain  
+                AppDomainSetup objSetup = new AppDomainSetup();
+                objSetup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
+                objAppDomain = AppDomain.CreateDomain("MyAppDomain", null, objSetup);
+
+                // 4. Invoke the method by using Reflection  
+                RemoteLoaderFactory factory = (RemoteLoaderFactory)objAppDomain.CreateInstance("Easyman.ScriptService", "RemoteAccess.RemoteLoaderFactory").Unwrap();
+
+                // with help of factory, create a real 'LiveClass' instance  
+                object objObject = factory.Create(dllName, "Easyman.ScriptService.Script.ScripRunner", null);
+
+                if (objObject == null)
+                {
+                    resBool = false;
+                    err.IsError = true;
+                    err.Message = "创建实例【Easyman.ScriptService.Script.ScripRunner】失败";
+                }
+
+                // *** Cast object to remote interface, avoid loading type info  
+                objRemote = (IRemoteInterface)objObject;
+
+                //初始化节点实例相关数据Initialize()
+                objRemote.Invoke("SetScriptNodeCaseID", new object[] { nodeCase.ID });
+                //设置启动数据库编号
+                objRemote.Invoke("setnowdbid", new object[] { nodeCase.DB_SERVER_ID });
+                //运行脚本
+                objRemote.Invoke("Run", null);
+
+                #region   获取错误信息GetErr()
+
+                //外部job需要接收内部错误信息
+                //用于判断重试次数、用于是否再执行
+                var errorMsg = (string)objRemote.Invoke("GetErrorMessage", null);
+
+                if (!string.IsNullOrEmpty(errorMsg.ToString()))
+                {
+                    err.IsError = true;
+                    err.Message = errorMsg.ToString();
+                    resBool = false;
+                }
+                else
+                {
+                    var warnMsg = (string)objRemote.Invoke("GetWarnMessage", null);
+                    if (!string.IsNullOrEmpty(warnMsg.ToString()))
+                    {
+                        err.IsError = false;
+                        err.Message = warnMsg.ToString();
+                        err.IsWarn = true;
+                    }
+                }
+
+                ////Dispose the objects and unload the generated DLLs.  
+                //objRemote = null;
+                //AppDomain.Unload(objAppDomain);
+                //System.IO.File.Delete(dllName);
+
+                #endregion
+            }
+            catch(Exception ex)
+            {
+                resBool = false;
+                err.IsError = true;
+                err.Message = ex.Message;
+            }
+            finally
+            {
+                //Dispose the objects and unload the generated DLLs.  
+                objRemote = null;
+                AppDomain.Unload(objAppDomain);
+                System.IO.File.Delete(dllName);
+            }
+
+            BLL.EM_SCRIPT_NODE_CASE_LOG.Instance.Add(nodeCase.ID, 3, "执行错误：\r\n" + err.Message,"");
+
+            return resBool;
+        }
+
+        #endregion
     }
 }
