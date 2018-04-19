@@ -8,6 +8,11 @@ using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using System.Reflection;
 using RemoteAccess;
+using System.IO;
+using System.Security.Cryptography;
+using System.Data;
+using Easyman.Librarys.DBHelper;
+using Easyman.Librarys.ApiRequest;
 
 namespace Easyman.ScriptService.Script
 {
@@ -151,7 +156,7 @@ namespace Easyman.ScriptService.Script
 
         #region 20180414新版动态编辑和方法的调用
 
-        public static bool NewRun(string code, BLL.EM_SCRIPT_NODE_CASE.Entity nodeCase, ref ErrorInfo err)
+        public static bool NewRun(string code, BLL.EM_SCRIPT_NODE_CASE.Entity nodeCase, List<KV> monitList, ref ErrorInfo err)
         {
             //动态编译
             string dllName = NewCompilerClass(code, ref err);
@@ -163,7 +168,7 @@ namespace Easyman.ScriptService.Script
             BLL.EM_SCRIPT_NODE_CASE_LOG.Instance.Add(nodeCase.ID, 4, "节点脚本编译成功:" + dllName, "");
 
             //调用必备函数+执行实例代码
-            return NewExcuteScriptCaseCode(dllName, nodeCase, ref err);
+            return NewExcuteScriptCaseCode(dllName, nodeCase, monitList, ref err);
         }
 
         /// <summary>
@@ -232,18 +237,31 @@ namespace Easyman.ScriptService.Script
             return assemblyName;
         }
 
-        public static bool NewExcuteScriptCaseCode(string dllName, BLL.EM_SCRIPT_NODE_CASE.Entity nodeCase, ref ErrorInfo err)
+        public static bool NewExcuteScriptCaseCode(string dllName, BLL.EM_SCRIPT_NODE_CASE.Entity nodeCase, List<KV> monitList, ref ErrorInfo err)
         {
             bool resBool = true;
+           // string dllPath = dllName;
+           // AppDomain ad = AppDomain.CurrentDomain;
+
+           // ProxyObject obj = (ProxyObject)ad.CreateInstanceFromAndUnwrap(System.AppDomain.CurrentDomain.BaseDirectory + "Easyman.ScriptService.exe", "Easyman.ScriptService.Script.ProxyObject");
+           // obj.LoadAssembly(dllPath);
+           // resBool=obj.Invoke("Easyman.ScriptService.Script.ScripRunner", nodeCase.ID, nodeCase.DB_SERVER_ID);
+           //// AppDomain.Unload(ad);
+            //DoAbsoluteDeleteFile(dllName, ref err);
+            #region 原模式
 
             AppDomain objAppDomain = null;
             IRemoteInterface objRemote = null;
             try
-            {   
+            {
                 // 0. Create an addtional AppDomain  
-                AppDomainSetup objSetup = new AppDomainSetup();
-                objSetup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
-                objAppDomain = AppDomain.CreateDomain("MyAppDomain", null, objSetup);
+                //AppDomainSetup objSetup = new AppDomainSetup();
+                //objSetup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
+                //objAppDomain = AppDomain.CreateDomain("MyAppDomain", null, objSetup);
+
+
+
+                objAppDomain = AppDomain.CreateDomain("Domain_"+DateTime.Now.Ticks.ToString());//.CurrentDomain;
 
                 // 4. Invoke the method by using Reflection  
                 RemoteLoaderFactory factory = (RemoteLoaderFactory)objAppDomain.CreateInstance("Easyman.ScriptService", "RemoteAccess.RemoteLoaderFactory").Unwrap();
@@ -265,6 +283,9 @@ namespace Easyman.ScriptService.Script
                 objRemote.Invoke("SetScriptNodeCaseID", new object[] { nodeCase.ID });
                 //设置启动数据库编号
                 objRemote.Invoke("setnowdbid", new object[] { nodeCase.DB_SERVER_ID });
+                //设置启动数据库编号
+                if (monitList != null&&monitList.Count()>0)
+                    objRemote.Invoke("SetMonitFileList", new object[] { monitList.Select(p => p.K).ToList() });
                 //运行脚本
                 objRemote.Invoke("Run", null);
 
@@ -298,7 +319,7 @@ namespace Easyman.ScriptService.Script
 
                 #endregion
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 resBool = false;
                 err.IsError = true;
@@ -307,14 +328,78 @@ namespace Easyman.ScriptService.Script
             finally
             {
                 //Dispose the objects and unload the generated DLLs.  
-                objRemote = null;
+                //objRemote = null;
                 AppDomain.Unload(objAppDomain);
-                System.IO.File.Delete(dllName);
+                // System.IO.File.Delete(dllName);
+                DoAbsoluteDeleteFile(dllName,ref err);
             }
 
-            BLL.EM_SCRIPT_NODE_CASE_LOG.Instance.Add(nodeCase.ID, 3, "执行错误：\r\n" + err.Message,"");
-
+            //     BLL.EM_SCRIPT_NODE_CASE_LOG.Instance.Add(nodeCase.ID, 3, "执行错误：\r\n" + err.Message,"");
+            #endregion
             return resBool;
+        }
+
+        #endregion
+
+
+
+        #region 删除生成后的DLL
+        public static void DoAbsoluteDeleteFile(object filePath, ref ErrorInfo err)
+        {
+            try
+            {
+                string filename = filePath.ToString();
+
+                if (string.IsNullOrEmpty(filename))
+                {
+                    return;
+                }
+
+                if (File.Exists(filename))
+                {
+                    File.SetAttributes(filename, FileAttributes.Normal);
+
+                    double sectors = Math.Ceiling(new FileInfo(filename).Length / 512.0);
+
+                    byte[] dummyBuffer = new byte[512];
+
+                    RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+
+                    FileStream inputStream = new FileStream(filename, FileMode.Open);
+
+                    inputStream.Position = 0;
+
+                    for (int sectorsWritten = 0; sectorsWritten < sectors; sectorsWritten++)
+                    {
+                        rng.GetBytes(dummyBuffer);
+
+                        inputStream.Write(dummyBuffer, 0, dummyBuffer.Length);
+
+                        sectorsWritten++;
+                    }
+
+                    inputStream.SetLength(0);
+
+                    inputStream.Close();
+
+                    DateTime dt = new DateTime(2049, 1, 1, 0, 0, 0);
+
+                    File.SetCreationTime(filename, dt);
+
+                    File.SetLastAccessTime(filename, dt);
+
+                    File.SetLastWriteTime(filename, dt);
+
+                    File.Delete(filename);
+
+
+                }
+            }
+            catch (Exception e)
+            {
+                err.Message = e.Message;
+                err.IsError = true;
+            }
         }
 
         #endregion

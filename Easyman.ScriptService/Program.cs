@@ -119,7 +119,7 @@ namespace Easyman.ScriptService
         /// <param name="opType"></param>
         /// <param name="info"></param>
         /// <returns></returns>
-        public static List<KV> OpMonitKVList(string opType, KV info=null,int num=5)
+        public static List<KV> OpMonitKVList(string opType, KV info=null,int num=5,List<KV> monitList=null)
         {
             lock (monitKVList)
             {
@@ -134,10 +134,16 @@ namespace Easyman.ScriptService
                 }
                 else if (opType == "remove")
                 {
-                    if (monitKVList.Exists(e => e.K == info.K))
+                    if (monitList != null && monitList.Count > 0)
                     {
-                        monitKVList.Remove(info);
-                    }
+                        foreach (KV kv in monitList)
+                        {
+                            if (monitKVList.Exists(e => e.K == kv.K))
+                            {
+                                monitKVList.Remove(info);
+                            }
+                        }                           
+                    }                   
                     return monitKVList;
                 }
                 else if (opType == "getall")
@@ -146,8 +152,14 @@ namespace Easyman.ScriptService
                 }
                 else if (opType == "take")
                 {
-                    var  kvLs = global.monitKVList.Take(num).ToList();
-                    monitKVList.RemoveAll(p => kvLs.Exists(e => e.K == p.K));//从内存中移除
+                    var  kvLs = global.monitKVList.Where(e=>e.Status!=5).Take(num).ToList();
+
+                    foreach (KV kv in kvLs)
+                    {
+                        int index = monitKVList.FindIndex(m => m == kv);
+                        monitKVList[index].Status = 5;                       
+                    }
+                   // monitKVList.RemoveAll(p => kvLs.Exists(e => e.K == p.K));//从内存中移除
                     return kvLs;
                 }
                 else

@@ -10,5 +10,6 @@ namespace Easyman.ScriptService
     {
         public long K { get; set; }
         public string V { get; set; }
+        public int Status { get; set; }
     }
 }
