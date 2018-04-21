@@ -47,7 +47,12 @@ namespace Easyman.ScriptService.Task
                 WriteLog(0, BLog.LogLevel.DEBUG, string.Format("获取当前任务组【" + ID + "】为并行任务。"));
                 try
                 {
-                    if (global.GetEffectMonitKVCount()>0)
+                    var ipNotLists = global.OpIpNotList("getall");
+                    BLog.Write(BLog.LogLevel.INFO, "1输出未在线的ip：" + string.Join(",", ipNotLists.Select(p => p.V)));
+
+                    int effectCount = global.GetEffectMonitKVCount();
+                    WriteLog(0, BLog.LogLevel.INFO, string.Format("输出有效的待拷贝文件数：" + effectCount));
+                    if (effectCount > 0)
                     { }
                     else
                     {

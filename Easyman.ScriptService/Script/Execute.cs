@@ -282,8 +282,9 @@ namespace Easyman.ScriptService.Script
                 //初始化节点实例相关数据Initialize()
                 objRemote.Invoke("SetScriptNodeCaseID", new object[] { nodeCase.ID });
                 //设置启动数据库编号
-                objRemote.Invoke("setnowdbid", new object[] { nodeCase.DB_SERVER_ID });
-                //设置启动数据库编号
+                //objRemote.Invoke("setnowdbid", new object[] { nodeCase.DB_SERVER_ID });
+
+                //设置待拷贝文件编号
                 if (monitList != null&&monitList.Count()>0)
                     objRemote.Invoke("SetMonitFileList", new object[] { monitList.Select(p => p.K).ToList() });
                 //运行脚本
