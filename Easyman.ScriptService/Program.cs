@@ -57,6 +57,16 @@ namespace Easyman.ScriptService
         /// </summary>
         public static List<KV> ipNotList = new List<KV>();
 
+        public static string isSearch = "0";
+
+        public static void SetSearchValue(string val)
+        {
+            lock(isSearch)
+            {
+                isSearch = val;
+            }
+        }
+
         /// <summary>
         /// 对不在线终端操作
         /// </summary>
@@ -140,7 +150,7 @@ namespace Easyman.ScriptService
                         {
                             if (monitKVList.Exists(e => e.K == kv.K))
                             {
-                                monitKVList.Remove(info);
+                                monitKVList.Remove(kv);
                             }
                         }                           
                     }                   
@@ -153,14 +163,15 @@ namespace Easyman.ScriptService
                 else if (opType == "take")
                 {
                     var  kvLs = global.monitKVList.Where(e=>e.Status!=5).Take(num).ToList();
-
+                    List<KV> newKV = new List<KV>();
                     foreach (KV kv in kvLs)
                     {
                         int index = monitKVList.FindIndex(m => m == kv);
-                        monitKVList[index].Status = 5;                       
+                        monitKVList[index].Status = 5;
+                        newKV.Add(monitKVList[index]);                    
                     }
                    // monitKVList.RemoveAll(p => kvLs.Exists(e => e.K == p.K));//从内存中移除
-                    return kvLs;
+                    return newKV;
                 }
                 else
                 {
@@ -179,6 +190,39 @@ namespace Easyman.ScriptService
                 if (monitKVList != null && monitKVList.Count > 0)
                 {
                     return monitKVList.Count;
+                    //return monitKVList.Where(p=>p.Status!=5).Count();
+                }
+                else return 0;
+            }
+        }
+
+        /// <summary>
+        /// 从待拷贝列表中删除状态为5的监控文件
+        /// </summary>
+        /// <returns></returns>
+        public static void DeleteMonitKv()
+        {
+            lock (monitKVList)
+            {
+                if (monitKVList != null && monitKVList.Count > 0)
+                {
+                    monitKVList.RemoveAll(p => p.Status == 5);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 获取有效的待监控文件数量
+        /// </summary>
+        /// <returns></returns>
+        public static int GetEffectMonitKVCount()
+        {
+            lock (monitKVList)
+            {
+                if (monitKVList != null && monitKVList.Count > 0)
+                {
+                    //return monitKVList.Count;
+                    return monitKVList.Where(p => p.Status != 5).Count();
                 }
                 else return 0;
             }

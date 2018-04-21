@@ -134,11 +134,19 @@ namespace Easyman.ScriptService.Task
                     }
                     BLL.EM_SCRIPT_CASE.Entity entityScriptCase= BLL.EM_SCRIPT_CASE.Instance.GetCase(_nodeCaseEntity.SCRIPT_CASE_ID);
                     //如果是并行任务，文件拷贝
-                    if (entityScriptCase.IS_SUPERVENE==1)
-                       monitList= GetMonitList();
+                    if (entityScriptCase.IS_SUPERVENE == 1)
+                    {
+                        monitList = GetMonitList();
+                        string monitIds = "空";
+                        if (monitList != null && monitList.Count() > 0)
+                        {
+                            monitIds = string.Join(",", monitList);
+                        }
+                        //log(string.Format("成功赋值文件列表：" + monitIds));
+                    }
                     //保存源代码到数据库lcz*****
                     int i = BLL.EM_SCRIPT_NODE_CASE.Instance.UpdateCompileContent(_nodeCaseEntity.ID, code);
-                    log(string.Format("成功赋值文件列表：" + ((monitList != null && monitList.Count() > 0) ? string.Join(",", monitList) : "空")));
+                   
                     if (entityScriptCase.IS_SUPERVENE == 1 && (monitList == null || monitList.Count()==0))
                     {
                         BLL.EM_SCRIPT_NODE_CASE.Instance.SetStop(_nodeCaseEntity.ID, Enums.ReturnCode.Warn.GetHashCode());
@@ -212,9 +220,9 @@ namespace Easyman.ScriptService.Task
         }
 
 
-        #region 获取待处理的文件列表
-        private static object symObj = new object();
-        public List<KV> GetMonitList()
+      
+        //作废
+        public List<KV> OldGetMonitList()
         {
             string sql = "";
             KeyValuePair<long, string> _dicMonitId = new KeyValuePair<long, string>();//初始化
@@ -222,31 +230,107 @@ namespace Easyman.ScriptService.Task
             List<KV> kvLs = new List<KV>();//获取几条
             lock (this)
             {
-                int count = global.GetMonitKVCount();
+                int count = global.GetEffectMonitKVCount();//获取有效的监控数量
                 if (count > 0) //&& count >= Main.EachSearchUploadCount/2
+                {
+                    kvLs = global.OpMonitKVList("take", null, Main.EachUploadCount);
+                    if(count< Main.EachSearchUploadCount / 2)
+                    {
+
+                    }
+                }
+                else
+                {
+                    if(global.GetMonitKVCount()>0)
+                    {
+                        global.DeleteMonitKv();
+                    }
+
+                    #region 获得待监控的列表+当前待上传的monitId
+                    //lock (global.monitKVList)//锁定查询语句
+                    //{
+                    //    //当内存中没有数量时，查询待添加的N条记录（来自配置文件的MaxUploadCount）
+                    //    var monitKVLists = global.OpMonitKVList("getall");
+                    //    if (monitKVLists == null || monitKVLists.Count == 0) //|| monitKVLists.Count<Main.EachSearchUploadCount / 2
+                    //    //if (global.monitFileIdList == null || global.monitFileIdList.Count == 0)
+                    //    {
+                            var ipNotLists = global.OpIpNotList("getall");
+                            log("输出未在线的ip：" + string.Join(",", ipNotLists.Select(p => p.V)));
+
+                    #region 获取MaxUploadCount条待拷贝记录(排除未在线终端)
+                    //采集待插入的文件列表
+                    //采集未在线的终端列表
+
+                    //lcz, 这个地方的sql可以只返回同一客户机ip的，便于下面的一个连接多个文件拷贝
+                    //获取不返回一个ip的文件，在从monitKVList中获取5个一样ip的终端去处理
+                    AddMonitKv();
+                        //}
+                        //_dicMonitId = global.monitFileIdList.Last();//从内存中获取元素
+                        //global.monitFileIdList.Remove(_dicMonitId.Key);//移除元素
+
+                    //var monitKVLists = global.OpMonitKVList("getall");
+                    //if (monitKVLists != null && monitKVLists.Count > 0)
+                    if (global.GetEffectMonitKVCount() > 0)
+                        {
+                            kvLs = global.OpMonitKVList("take", null, Main.EachUploadCount);
+                        }
+
+                    //}
+                    #endregion
+                }
+
+            }
+            return kvLs;
+        }
+
+        /// <summary>
+        /// 获取一个批次的待拷贝文件集合
+        /// </summary>
+        /// <returns></returns>
+        public List<KV> GetMonitList()
+        {
+            var ipNotLists = global.OpIpNotList("getall");
+            log("当前未在线的ip：" + string.Join(",", ipNotLists.Select(p => p.V)));
+
+            List<KV> kvLs = new List<KV>();//获取几条
+            lock (this) {
+                int count = global.GetEffectMonitKVCount();//获取有效的监控数量
+                if (count > 0)
                 {
                     kvLs = global.OpMonitKVList("take", null, Main.EachUploadCount);
                 }
                 else
                 {
-                    #region 获得待监控的列表+当前待上传的monitId
-                    lock (symObj)//锁定查询语句
+                    if (global.GetMonitKVCount() >= Main.NeedClearCount)//超出80个5状态，清理一次
                     {
-                        //当内存中没有数量时，查询待添加的N条记录（来自配置文件的MaxUploadCount）
-                        var monitKVLists = global.OpMonitKVList("getall");
-                        if (monitKVLists == null || monitKVLists.Count == 0) //|| monitKVLists.Count<Main.EachSearchUploadCount / 2
-                        //if (global.monitFileIdList == null || global.monitFileIdList.Count == 0)
-                        {
-                            var ipNotLists = global.OpIpNotList("getall");
-                            log("输出未在线的ip：" + string.Join(",", ipNotLists.Select(p => p.V)));                      
+                        global.DeleteMonitKv();
+                    }
+                }
 
-                            #region 获取MaxUploadCount条待拷贝记录(排除未在线终端)
-                            //采集待插入的文件列表
-                            //采集未在线的终端列表
+                //if (global.GetEffectMonitKVCount() > 0)
+                //{
+                //    kvLs = global.OpMonitKVList("take", null, Main.EachUploadCount);
+                //}
 
-                            //lcz, 这个地方的sql可以只返回同一客户机ip的，便于下面的一个连接多个文件拷贝
-                            //获取不返回一个ip的文件，在从monitKVList中获取5个一样ip的终端去处理
-                            sql = string.Format(@"SELECT A.ID, B.IP, A.COMPUTER_ID
+              
+            }
+
+            return kvLs;
+        }
+
+        //作废
+        private void AddMonitKv()
+        {
+            var ipNotLists = global.OpIpNotList("getall");
+            log("输出未在线的ip：" + string.Join(",", ipNotLists.Select(p => p.V)));
+
+            #region 获取MaxUploadCount条待拷贝记录(排除未在线终端)
+            //采集待插入的文件列表
+            //采集未在线的终端列表
+
+            //lcz, 这个地方的sql可以只返回同一客户机ip的，便于下面的一个连接多个文件拷贝
+            //获取不返回一个ip的文件，在从monitKVList中获取5个一样ip的终端去处理
+            string sql = string.Format(@"SELECT A.ID, B.IP, A.COMPUTER_ID
                                                   FROM (SELECT ID, COMPUTER_ID
                                                           FROM (SELECT A.ID,
                                                                        A.COMPUTER_ID,
@@ -267,112 +351,96 @@ namespace Easyman.ScriptService.Task
                                                                         LEFT JOIN FM_FILE_FORMAT F ON (F.ID=A.FILE_FORMAT_ID)   
                                                                  WHERE     NVL (C.COMPUTER_ID, 0) = 0 AND F.NAME<>'Folder'
                                                                        AND (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3))
-                                                         WHERE RN <{1}) A
+                                                         WHERE RN <={1}) A
                                                        LEFT JOIN FM_COMPUTER B ON (A.COMPUTER_ID = B.ID)", string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
 
-                   
-                            StringBuilder sb = new StringBuilder();//待处理
-                                                                   //StringBuilder sbNotAlive = new StringBuilder();//未在线
-                            List<string> notAliveList = new List<string>();//当前查询的未在线
-                            DataTable dt = null;
+
+            StringBuilder sb = new StringBuilder();//待处理
+                                                   //StringBuilder sbNotAlive = new StringBuilder();//未在线
+            List<string> notAliveList = new List<string>();//当前查询的未在线
+            DataTable dt = null;
+            using (BDBHelper dbop = new BDBHelper())
+            {
+                dt = dbop.ExecuteDataTable(sql);
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=5 where id in({0})", string.Join(",", dt.AsEnumerable().Select(r => r["ID"]).Distinct().ToArray()).TrimEnd(','));
+                    dbop.ExecuteNonQuery(updateSql);
+                }
+            }
+            log("查询出的数量为：【" + dt.Rows.Count + "】");
+            if (dt != null && dt.Rows.Count > 0)
+            {
+                List<string> hasAliveIps = new List<string>();//当前批次的在线ip
+
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    sb.Append(dt.Rows[i][0] + ",");
+                    //校验ip
+                    string curIp = dt.Rows[i][1].ToString().Trim();
+                    //log("当前ip【" + curIp + "】");
+                    var curKv = new KV { K = Convert.ToInt64(dt.Rows[i][2].ToString()), V = dt.Rows[i][1].ToString() };//不在线的ip
+
+                    if (string.IsNullOrEmpty(curIp))
+                    {
+                        log("ip[" + curIp + "]为空");
+                    }
+                    else if (hasAliveIps.Contains(curIp))
+                    {
+                        global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
+                        //log("ip[" + curIp + "]在已在线列表中");
+                    }
+                    else
+                    {
+                        if (ipNotLists.Exists(p => p.K == curKv.K))
+                        {
+                            //log("ip[" + curIp + "]未在线2");
                             using (BDBHelper dbop = new BDBHelper())
                             {
-                                dt = dbop.ExecuteDataTable(sql);
-                                if (dt != null && dt.Rows.Count > 0)
-                                {
-                                    string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=5 where id in({0})", string.Join(",", dt.AsEnumerable().Select(r => r["ID"]).Distinct().ToArray()).TrimEnd(','));
-                                    dbop.ExecuteNonQuery(updateSql);
-                                }
+                                string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=0 where id ={0}", dt.Rows[i][0].ToString());
+                                dbop.ExecuteNonQuery(updateSql);
                             }
-                            log("查询出的数量为：【" + dt.Rows.Count + "】");
-                            if (dt != null && dt.Rows.Count > 0)
-                            {
-                                List<string> hasAliveIps = new List<string>();//当前批次的在线ip
-
-                                for (int i = 0; i < dt.Rows.Count; i++)
-                                {
-                                    sb.Append(dt.Rows[i][0] + ",");
-                                    //校验ip
-                                    string curIp = dt.Rows[i][1].ToString().Trim();
-                                    //log("当前ip【" + curIp + "】");
-                                    var curKv = new KV { K = Convert.ToInt64(dt.Rows[i][2].ToString()), V = dt.Rows[i][1].ToString() };//不在线的ip
-
-                                    if (string.IsNullOrEmpty(curIp))
-                                    {
-                                        log("ip[" + curIp + "]为空");
-                                    }
-                                    else if (hasAliveIps.Contains(curIp))
-                                    {
-                                        global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
-                                        //log("ip[" + curIp + "]在已在线列表中");
-                                    }
-                                    else
-                                    {
-                                        if (ipNotLists.Exists(p => p.K == curKv.K))
-                                        {
-                                            //log("ip[" + curIp + "]未在线2");
-                                            using (BDBHelper dbop = new BDBHelper())
-                                            {
-                                                string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=0 where id ={0}", dt.Rows[i][0].ToString());
-                                                dbop.ExecuteNonQuery(updateSql);
-                                            }
-                                            if (!notAliveList.Contains(curKv.V))
-                                                notAliveList.Add(curKv.V);
-                                        }
-                                        else if (!Request.PingIP(curIp))
-                                        {
-                                            //log("ip[" + curIp + "]未在线");
-                                            using (BDBHelper dbop = new BDBHelper())
-                                            {
-                                                string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=0 where id ={0}", dt.Rows[i][0].ToString());
-                                                dbop.ExecuteNonQuery(updateSql);
-                                            }
-                                            global.OpIpNotList("add", curKv);
-                                            notAliveList.Add(dt.Rows[i][1].ToString());
-                                            if (!ipNotLists.Exists(p => p.K == curKv.K))
-                                            {
-                                                ipNotLists.Add(curKv);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
-                                            hasAliveIps.Add(curIp);
-                                            log("ip[" + curIp + "]在线");
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                string msg = "未在库中查询到需要拷贝的文件，当前不存在需拷贝文件";
-                                //log(msg);
-                                log(msg, 3, string.Format(@"执行查询的sql:\r\n{0}。", sql));
-                                return null;
-                            }
-                            log("再次输出未在线ip：" + string.Join(",", global.OpIpNotList("getall").Select(p => p.V)));
-                            #endregion
-
-                            log("内存中无监控的文件列表，从数据库中去获取",4, string.Format(@"执行查询的sql:\r\n{0}。\r\n查询的结果为：{1}", sql, sb));
-                            log("获取到未在线的ip【" + (notAliveList.Count > 0 ? string.Join(",", notAliveList.Distinct()) : "") + "】,当前未在线的ip列表为【" + string.Join(" , ", global.ipNotList.Select(p => p.V)) + "】");
+                            if (!notAliveList.Contains(curKv.V))
+                                notAliveList.Add(curKv.V);
                         }
-                        //_dicMonitId = global.monitFileIdList.Last();//从内存中获取元素
-                        //global.monitFileIdList.Remove(_dicMonitId.Key);//移除元素
-
-                        //var monitKVLists = global.OpMonitKVList("getall");
-                        //if (monitKVLists != null && monitKVLists.Count > 0)
-                        if (global.GetMonitKVCount() > 0)
+                        else if (!Request.PingIP(curIp))
                         {
-                            kvLs = global.OpMonitKVList("take", null, Main.EachUploadCount);
+                            //log("ip[" + curIp + "]未在线");
+                            using (BDBHelper dbop = new BDBHelper())
+                            {
+                                string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=0 where id ={0}", dt.Rows[i][0].ToString());
+                                dbop.ExecuteNonQuery(updateSql);
+                            }
+                            global.OpIpNotList("add", curKv);
+                            notAliveList.Add(dt.Rows[i][1].ToString());
+                            if (!ipNotLists.Exists(p => p.K == curKv.K))
+                            {
+                                ipNotLists.Add(curKv);
+                            }
                         }
-
+                        else
+                        {
+                            global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
+                            hasAliveIps.Add(curIp);
+                            log("ip[" + curIp + "]在线");
+                        }
                     }
-                    #endregion
                 }
+                log("再次输出未在线ip：" + string.Join(",", global.OpIpNotList("getall").Select(p => p.V)));
+                #endregion
 
+                log("内存中无监控的文件列表，从数据库中去获取", 4, string.Format(@"执行查询的sql:\r\n{0}。\r\n查询的结果为：{1}", sql, sb));
+                log("获取到未在线的ip【" + (notAliveList.Count > 0 ? string.Join(",", notAliveList.Distinct()) : "") + "】,当前未在线的ip列表为【" + string.Join(" , ", global.ipNotList.Select(p => p.V)) + "】");
             }
-            return kvLs;
+            else
+            {
+                string msg = "未在库中查询到需要拷贝的文件，当前不存在需拷贝文件";
+                //log(msg);
+                log(msg, 3, string.Format(@"执行查询的sql:\r\n{0}。", sql));
+                //return null;
+            }
         }
+
 
         /// <summary>
         /// 写日志

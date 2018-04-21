@@ -78,7 +78,7 @@ namespace Easyman.ScriptService.Script
         public void SetMonitFileList(List<long> monitList)
         {
             _monitList = monitList;
-            log(string.Format("成功赋值文件列表：" + monitList != null ? string.Join(",", monitList) : "空"));
+            //log(string.Format("1成功赋值文件列表：" + monitList != null ? string.Join(",", monitList) : "空"));
         }
 
         //调用动态函数
@@ -180,7 +180,7 @@ namespace Easyman.ScriptService.Script
                 return false;
             }
 
-            log(string.Format("数据库已经成功切换为：【{0}】", dbid));
+            //log(string.Format("数据库已经成功切换为：【{0}】", dbid));
 
             return true;
         }

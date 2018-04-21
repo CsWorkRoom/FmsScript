@@ -37,7 +37,12 @@ namespace Easyman.ScriptService
         /// <summary>
         /// 每次从库中查询出的待处理文件数量（默认50）
         /// </summary>
-        public static int EachSearchUploadCount = 50;
+        public static int EachSearchUploadCount = 200;
+
+        /// <summary>
+        /// 清理monitkvList无效状态5的触发值
+        /// </summary>
+        public static int NeedClearCount = 50;
         /// <summary>
         /// 单次从队列获取上传数（默认为5）
         /// </summary>
@@ -109,6 +114,9 @@ namespace Easyman.ScriptService
                 EachSearchUploadCount = BConfig.GetConfigToInt("EachSearchUploadCount");
 
                 MaxMonitCount = BConfig.GetConfigToInt("MaxMonitCount");
+
+                NeedClearCount = BConfig.GetConfigToInt("NeedClearCount");
+
 
                 //if (MaxExecuteNodeCount < 1)
                 //{

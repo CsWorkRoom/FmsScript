@@ -47,75 +47,81 @@ namespace Easyman.ScriptService.Task
                 WriteLog(0, BLog.LogLevel.DEBUG, string.Format("获取当前任务组【" + ID + "】为并行任务。"));
                 try
                 {
-
-                    #region 判断监控文件表中是否有待处理的monit_file. 没有将跳出任务组实例的创建
-                    //string sql = string.Format(@"select count(1) from FM_MONIT_FILE where COPY_STATUS=0 or COPY_STATUS=3");
-                    #region 再次验证和清理未在线终端
-                    //var ipArr = global.ipList.ToArray();
-                    //for (int i = 0; i < ipArr.Count(); i++)
-                    //{
-                    //    if (Request.PingIP(ipArr[i].Value) && global.ipList.ContainsKey(ipArr[i].Key))
-                    //    {
-                    //        global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
-                    //    }
-                    //}
-                    var ipNotLists = global.OpIpNotList("getall");
-                    if (ipNotLists != null && ipNotLists.Count > 0)
-                    {
-                        int cnt = ipNotLists.Count;
-                        for (int i = cnt - 1; i >= 0; i--)
-                        {
-                            var item = ipNotLists[i];
-                            if (Librarys.ApiRequest.Request.PingIP(item.V))
-                            {
-                                global.OpIpNotList("remove", item);
-                            }
-                        }
-                        ipNotLists = global.OpIpNotList("getall");
-
-                    }
-                    #endregion
-                    string sql = string.Format(@"       SELECT ID, COMPUTER_ID
-  FROM (SELECT A.ID, A.COMPUTER_ID, ROW_NUMBER () OVER (ORDER BY A.ID) RN
-          FROM FM_MONIT_FILE A
-               LEFT JOIN
-               (    SELECT DISTINCT REGEXP_SUBSTR ('{0}',
-                                                   '[^,]+',
-                                                   1,
-                                                   LEVEL)
-                                       AS COMPUTER_ID
-                      FROM DUAL
-                CONNECT BY REGEXP_SUBSTR ('{0}',
-                                          '[^,]+',
-                                          1,                                          
-                                          LEVEL)
-                              IS NOT NULL) C
-                  ON (A.COMPUTER_ID = C.COMPUTER_ID)
-             LEFT JOIN FM_FILE_FORMAT F ON (F.ID=A.FILE_FORMAT_ID) 
-         WHERE     NVL (C.COMPUTER_ID, 0) = 0  AND F.NAME<>'Folder'
-               AND (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3))
- WHERE RN <{1}", string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
-
-                    //string sql = string.Format(@"  SELECT A.ID,A.COMPUTER_ID
-                    //            FROM FM_MONIT_FILE A
-                    //             LEFT JOIN FM_file_FORMAT F ON A.FILE_FORMAT_ID=F.ID
-                    //           WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3) and F.NAME<>'Folder'
-                    //                 AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
-                    //                 AND ROWNUM <= {2}
-                    //        ORDER BY A.ID", ipNotLists.Count,
-                    //               ipNotLists.Count == 0 ? "0" : string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
-                    DataTable dt = null;
-                    using (BDBHelper dbop = new BDBHelper())
-                    {
-                        dt = dbop.ExecuteDataTable(sql);
-                    }
-                    if (dt != null && dt.Rows.Count > 0)
+                    if (global.GetEffectMonitKVCount()>0)
                     { }
                     else
                     {
-                        WriteLog(0, BLog.LogLevel.INFO, string.Format("并行任务【自动上传文件】无待上传文件，将不创建任务组实例", string.Format("执行的sql语句为：{0}", sql), ID));
+                        WriteLog(0, BLog.LogLevel.INFO, string.Format("并行任务【自动上传文件】无待上传文件，将不创建任务组实例"));
                         return false;
                     }
+                    #region 判断监控文件表中是否有待处理的monit_file. 没有将跳出任务组实例的创建--作废
+                    //                   //string sql = string.Format(@"select count(1) from FM_MONIT_FILE where COPY_STATUS=0 or COPY_STATUS=3");
+                    //                   #region 再次验证和清理未在线终端
+                    //                   //var ipArr = global.ipList.ToArray();
+                    //                   //for (int i = 0; i < ipArr.Count(); i++)
+                    //                   //{
+                    //                   //    if (Request.PingIP(ipArr[i].Value) && global.ipList.ContainsKey(ipArr[i].Key))
+                    //                   //    {
+                    //                   //        global.ipList.Remove(ipArr[i].Key);//移除已在线的终端
+                    //                   //    }
+                    //                   //}
+                    //                   var ipNotLists = global.OpIpNotList("getall");
+                    //                   if (ipNotLists != null && ipNotLists.Count > 0)
+                    //                   {
+                    //                       int cnt = ipNotLists.Count;
+                    //                       for (int i = cnt - 1; i >= 0; i--)
+                    //                       {
+                    //                           var item = ipNotLists[i];
+                    //                           if (Librarys.ApiRequest.Request.PingIP(item.V))
+                    //                           {
+                    //                               global.OpIpNotList("remove", item);
+                    //                           }
+                    //                       }
+                    //                       ipNotLists = global.OpIpNotList("getall");
+
+                    //                   }
+                    //                   #endregion
+                    //                   string sql = string.Format(@"       SELECT ID, COMPUTER_ID
+                    // FROM (SELECT A.ID, A.COMPUTER_ID, ROW_NUMBER () OVER (ORDER BY A.ID) RN
+                    //         FROM FM_MONIT_FILE A
+                    //              LEFT JOIN
+                    //              (    SELECT DISTINCT REGEXP_SUBSTR ('{0}',
+                    //                                                  '[^,]+',
+                    //                                                  1,
+                    //                                                  LEVEL)
+                    //                                      AS COMPUTER_ID
+                    //                     FROM DUAL
+                    //               CONNECT BY REGEXP_SUBSTR ('{0}',
+                    //                                         '[^,]+',
+                    //                                         1,                                          
+                    //                                         LEVEL)
+                    //                             IS NOT NULL) C
+                    //                 ON (A.COMPUTER_ID = C.COMPUTER_ID)
+                    //            LEFT JOIN FM_FILE_FORMAT F ON (F.ID=A.FILE_FORMAT_ID) 
+                    //        WHERE     NVL (C.COMPUTER_ID, 0) = 0  AND F.NAME<>'Folder'
+                    //              AND (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3))
+                    //WHERE RN <={1}", string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
+
+                    //                   //string sql = string.Format(@"  SELECT A.ID,A.COMPUTER_ID
+                    //                   //            FROM FM_MONIT_FILE A
+                    //                   //             LEFT JOIN FM_file_FORMAT F ON A.FILE_FORMAT_ID=F.ID
+                    //                   //           WHERE     (A.COPY_STATUS = 0 OR A.COPY_STATUS = 3) and F.NAME<>'Folder'
+                    //                   //                 AND ( ({0} = 0) OR ({0} > 0 AND A.COMPUTER_ID NOT IN ({1})))
+                    //                   //                 AND ROWNUM <= {2}
+                    //                   //        ORDER BY A.ID", ipNotLists.Count,
+                    //                   //               ipNotLists.Count == 0 ? "0" : string.Join(",", ipNotLists.Select(p => p.K).Distinct()), Main.EachSearchUploadCount);
+                    //                   DataTable dt = null;
+                    //                   using (BDBHelper dbop = new BDBHelper())
+                    //                   {
+                    //                       dt = dbop.ExecuteDataTable(sql);
+                    //                   }
+                    //                   if (dt != null && dt.Rows.Count > 0)
+                    //                   { }
+                    //                   else
+                    //                   {
+                    //                       WriteLog(0, BLog.LogLevel.INFO, string.Format("并行任务【自动上传文件】无待上传文件，将不创建任务组实例", string.Format("执行的sql语句为：{0}", sql), ID));
+                    //                       return false;
+                    //                   }
                     #endregion
                 }
                 catch (Exception ex)
