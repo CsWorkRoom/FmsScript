@@ -201,7 +201,7 @@ namespace Easyman.ScriptService
                 //启动手动任务线程
                 Task.Hand.Start();
 
-                //启动节点扫描线程
+                //启动节点扫描线程（含监控任务数量的限制处理，含添加的待拷贝文件列表）
                 Task.Scanner.Start();
 
                 BLog.Write(BLog.LogLevel.INFO, "程序已经启动。");

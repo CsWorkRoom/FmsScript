@@ -30,6 +30,11 @@ namespace Easyman.ScriptService.Task
         private static BackgroundWorker _bw2;
 
         /// <summary>
+        /// 限定和处理等待中的待监控文件夹的线程
+        /// </summary>
+        private static BackgroundWorker _bw3;
+
+        /// <summary>
         /// 开始启动
         /// </summary>
         /// <returns></returns>
@@ -37,19 +42,32 @@ namespace Easyman.ScriptService.Task
         {
             try
             {
+                #region 原节点扫码线程
                 BLog.Write(BLog.LogLevel.INFO, "节点扫描线程即将启动。");
                 _bw = new BackgroundWorker();
                 _bw.WorkerSupportsCancellation = true;
                 _bw.DoWork += DoWork;
                 _bw.RunWorkerAsync();
                 BLog.Write(BLog.LogLevel.INFO, "节点扫描线程已经启动。");
+                #endregion
 
+                #region 添加待拷贝列表线程
                 BLog.Write(BLog.LogLevel.INFO, "写入待拷贝文件线程即将启动。");
                 _bw2 = new BackgroundWorker();
                 _bw2.WorkerSupportsCancellation = true;
                 _bw2.DoWork += DoWork2;
                 _bw2.RunWorkerAsync();
                 BLog.Write(BLog.LogLevel.INFO, "写入待拷贝文件线程已启动。");
+                #endregion
+
+                #region 文件夹监控任务的数量限定及处理
+                BLog.Write(BLog.LogLevel.INFO, "限定和处理等待中的待监控文件夹的线程即将启动。");
+                _bw3 = new BackgroundWorker();
+                _bw3.WorkerSupportsCancellation = true;
+                _bw3.DoWork += DoWork3;
+                _bw3.RunWorkerAsync();
+                BLog.Write(BLog.LogLevel.INFO, "限定和处理等待中的待监控文件夹的线程已启动。");
+                #endregion
             }
             catch (Exception ex)
             {
@@ -73,6 +91,11 @@ namespace Easyman.ScriptService.Task
                 _bw2.CancelAsync();
                 _bw2.Dispose();
                 BLog.Write(BLog.LogLevel.INFO, "待拷贝文件线程已经停止。");
+
+                BLog.Write(BLog.LogLevel.INFO, "限定和处理等待中的待监控文件夹的线程即将停止。");
+                _bw3.CancelAsync();
+                _bw3.Dispose();
+                BLog.Write(BLog.LogLevel.INFO, "限定和处理等待中的待监控文件夹的线程已经停止。");
             }
             catch (Exception ex)
             {
@@ -255,6 +278,79 @@ namespace Easyman.ScriptService.Task
         }
 
         /// <summary>
+        /// 限定和处理待
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private static void DoWork3(object sender, DoWorkEventArgs e)
+        {
+            while (Main.IsRun)
+            {
+                try
+                {
+                    BLog.Write(BLog.LogLevel.INFO, "开始处理限定的监控文件夹任务");
+
+                    #region 查询当前非并行执行中的任务实例的数量，如果数量小于MonitFolderCount，则补齐执行中的数量。
+                    //修改等待中的任务为执行中(补齐差量)
+                    string sql = string.Format(@"SELECT COUNT (1)
+                          FROM EM_SCRIPT_CASE
+                         WHERE IS_SUPERVENE <> 1 AND RUN_STATUS = 2");
+                    object obj = null;
+                    using (BDBHelper dbop = new BDBHelper())
+                    {
+                        obj = dbop.ExecuteScalar(sql);//获得执行中的非并行任务数
+                    }
+                    BLog.Write(BLog.LogLevel.INFO, "获取到执行中任务数：" + obj);
+
+                    if (obj != null && Convert.ToInt32(obj) < Main.MaxMonitCount)//当执行中的数量小于MaxMonitCount
+                    {
+                        int difCount = Main.MaxMonitCount - Convert.ToInt32(obj);//差量
+                        sql = string.Format(@"SELECT COUNT(1)
+                                FROM (SELECT A.ID,
+                                            ROW_NUMBER () OVER (PARTITION BY TRUNC (ID) ORDER BY ID) RN
+                                        FROM EM_SCRIPT_CASE A WHERE RUN_STATUS = 1)
+                                WHERE RN <= {0}", difCount);
+                        object o2 = null;
+                        using (BDBHelper dbop = new BDBHelper())
+                        {
+                            o2 = dbop.ExecuteScalar(sql);
+                        }
+                        BLog.Write(BLog.LogLevel.INFO, "按差量获取等待中任务数：" + o2);
+                        if (o2 != null && Convert.ToInt32(o2) > 0)
+                        {
+                            sql = string.Format(@"MERGE INTO EM_SCRIPT_CASE A
+                                     USING (SELECT ID
+                                              FROM (SELECT ID,
+                                                           ROW_NUMBER ()
+                                                              OVER (PARTITION BY TRUNC (ID) ORDER BY ID)
+                                                              RN
+                                                      FROM EM_SCRIPT_CASE
+                                                     WHERE RUN_STATUS = 1)
+                                             WHERE RN <= {0}) B
+                                        ON (A.ID = B.ID)
+                                WHEN MATCHED
+                                THEN
+                                   UPDATE SET RUN_STATUS = 2", difCount);
+
+                            using (BDBHelper dbop = new BDBHelper())
+                            {
+                                dbop.ExecuteNonQuery(sql);//修改等待的任务为执行中
+                            }
+                            BLog.Write(BLog.LogLevel.INFO, "执行把等待中任务改为执行中");
+                        }
+                    }
+                    #endregion
+
+                }
+                catch (Exception ex)
+                {
+                    BLog.Write(BLog.LogLevel.ERROR, "限定监控的文件夹任务出现异常：" + ex.ToString());
+                }
+                Thread.Sleep(30000);//半分钟执行一次
+            }
+        }
+
+        /// <summary>
         /// 不断扫描脚本实例表，对于需要运行的实例，为其添加节点实例并运行
         /// </summary>
         /// <param name="sender"></param>
@@ -280,53 +376,6 @@ namespace Easyman.ScriptService.Task
                             }
                         }
                     }
-
-                    #region 查询当前非并行执行中的任务实例的数量，如果数量小于MonitFolderCount，则补齐执行中的数量。
-                    //修改等待中的任务为执行中(补齐差量)
-                    string sql = string.Format(@"SELECT COUNT (1)
-                          FROM EM_SCRIPT_CASE
-                         WHERE IS_SUPERVENE <> 1 AND RUN_STATUS = 2");
-                    object obj = null;
-                    using (BDBHelper dbop = new BDBHelper())
-                    {
-                        obj = dbop.ExecuteScalar(sql);//获得执行中的非并行任务数
-                    }
-                    if (obj != null && Convert.ToInt32(obj) < Main.MaxMonitCount)//当执行中的数量小于MaxMonitCount
-                    {
-                        int difCount = Main.MaxMonitCount - Convert.ToInt32(obj);//差量
-                        sql = string.Format(@"SELECT COUNT(1)
-                                FROM (SELECT A.ID,
-                                            ROW_NUMBER () OVER (PARTITION BY TRUNC (ID) ORDER BY ID) RN
-                                        FROM EM_SCRIPT_CASE A WHERE RUN_STATUS = 1)
-                                WHERE RN <= {0}", difCount);
-                        object o2 = null;
-                        using (BDBHelper dbop = new BDBHelper())
-                        {
-                            o2 = dbop.ExecuteScalar(sql);
-                        }
-                        if(o2!=null&& Convert.ToInt32(o2) >0)
-                        {
-                            sql = string.Format(@"MERGE INTO EM_SCRIPT_CASE A
-                                     USING (SELECT ID
-                                              FROM (SELECT ID,
-                                                           ROW_NUMBER ()
-                                                              OVER (PARTITION BY TRUNC (ID) ORDER BY ID)
-                                                              RN
-                                                      FROM EM_SCRIPT_CASE
-                                                     WHERE RUN_STATUS = 1)
-                                             WHERE RN <= {0}) B
-                                        ON (A.ID = B.ID)
-                                WHEN MATCHED
-                                THEN
-                                   UPDATE SET RUN_STATUS = 2", difCount);
-
-                            using (BDBHelper dbop = new BDBHelper())
-                            {
-                                dbop.ExecuteNonQuery(sql);//修改等待的任务为执行中
-                            }
-                        }
-                    }
-                    #endregion
                 }
                 catch (Exception ex)
                 {
