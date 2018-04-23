@@ -403,7 +403,7 @@ namespace Easyman.ScriptService.Task
                             if (!notAliveList.Contains(curKv.V))
                                 notAliveList.Add(curKv.V);
                         }
-                        else if (!Request.PingIP(curIp))
+                        else if (!Request.OldPingIP(curIp))
                         {
                             //log("ip[" + curIp + "]未在线");
                             using (BDBHelper dbop = new BDBHelper())
