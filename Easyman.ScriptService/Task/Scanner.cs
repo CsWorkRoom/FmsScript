@@ -206,12 +206,12 @@ namespace Easyman.ScriptService.Task
 
                                 if (string.IsNullOrEmpty(curIp))
                                 {
-                                    //log("ip[" + curIp + "]为空");
-                                    BLog.Write(BLog.LogLevel.INFO, "ip[" + curIp + "]为空");
+                                    //log("ip[" + curIp + "]为空");//20180701注释
+                                    //BLog.Write(BLog.LogLevel.INFO, "ip[" + curIp + "]为空");
                                 }
                                 else if (hasAliveIps.Contains(curIp))
                                 {
-                                    global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
+                                    //global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });//20180701注释
                                     //log("ip[" + curIp + "]在已在线列表中");
                                 }
                                 else
@@ -247,7 +247,7 @@ namespace Easyman.ScriptService.Task
                                         global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
                                         hasAliveIps.Add(curIp);
                                         //log("ip[" + curIp + "]在线");
-                                        BLog.Write(BLog.LogLevel.INFO, "ip[" + curIp + "]在线");
+                                        //BLog.Write(BLog.LogLevel.INFO, "ip[" + curIp + "]在线");//20180701注释
                                     }
                                 }
                             }

@@ -1444,9 +1444,9 @@ namespace Easyman.ScriptService.Script
             log(string.Format(@"开启对{0}的{1}文件夹监控...", ip, folderName));
             string url = Librarys.Config.BConfig.GetConfigToString("MonitServiceIP");
             string postData = string.Format("ip={0}&folderName={1}&scriptNodeCaseId={2}", ip, folderName, _scriptNodeCaseID.ToString());
-            log("参数说明:" + postData);
+            //log("参数说明:" + postData);//20180701注释
             string surl = url + (postData == "" ? "" : "?") + postData;
-            log("访问路径:" + surl);
+            //log("访问路径:" + surl);//20180701注释
             var mess = Request.GetHttp(url, postData);
             if (mess.Contains("结果:false"))
             {
@@ -2019,7 +2019,7 @@ namespace Easyman.ScriptService.Script
                                 }
                                 using (BDBHelper dbop = new BDBHelper())
                                 {
-                                    log(string.Format("当前监控文件ID:{0},MD5:{1}。", dt.Rows[i]["ID"].ToString(), dt.Rows[i]["MD5"].ToString()));
+                                   // log(string.Format("当前监控文件ID:{0},MD5:{1}。", dt.Rows[i]["ID"].ToString(), dt.Rows[i]["MD5"].ToString()));//20180701注释
                                     dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where ID={0}", dt.Rows[i]["ID"].ToString()));
                                     //dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where MD5= '{0}'", dt.Rows[i]["MD5"].ToString()));
                                     dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,TEST_COPY_STATUS_TIME=sysdate where  MD5= '{0}'", dt.Rows[i]["MD5"].ToString()));
