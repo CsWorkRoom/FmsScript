@@ -32,7 +32,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Oracle.ManagedDataAccess, Version=4.121.1.0, Culture=neutral, PublicKeyToken=89b483f429c47342, processorArchitecture=MSIL" />
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
@@ -47,6 +49,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BLL\Computer\FileProperty.cs" />
+    <Compile Include="BLL\Computer\FileTool.cs" />
+    <Compile Include="BLL\Computer\MonitConst.cs" />
+    <Compile Include="BLL\Computer\MonitFile.cs" />
+    <Compile Include="BLL\Computer\MonitInfo.cs" />
     <Compile Include="BLL\EM_CONNECT_LINE.cs" />
     <Compile Include="BLL\EM_CONNECT_LINE_FORCASE.cs" />
     <Compile Include="BLL\EM_DB_SERVER.cs" />
@@ -77,6 +84,7 @@
     <Compile Include="ErrorInfo.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Script\Base.cs" />
+    <Compile Include="Script\ProxyObject.cs" />
     <Compile Include="Script\RemoteLoaderFactory.cs" />
     <Compile Include="Script\Test.cs" />
     <Compile Include="Script\Execute.cs" />

@@ -140,8 +140,9 @@ namespace Easyman.Librarys.ApiRequest
                     //要重定向 IO 流，Process 对象必须将 UseShellExecute 属性设置为 False。
                     myProcess.StartInfo.RedirectStandardOutput = true;
                     myProcess.StartInfo.RedirectStandardInput = true;
-                    myProcess.StartInfo.RedirectStandardError = true;
+                    myProcess.StartInfo.RedirectStandardError = true;                  
                     myProcess.Start();
+                    //myProcess.WaitForExit();
                     myProcess.StandardInput.WriteLine("ping " + ip + " -w 200");
                     myProcess.StandardInput.WriteLine("exit");
                     string strRst = myProcess.StandardOutput.ReadToEnd();
