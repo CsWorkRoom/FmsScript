@@ -10,15 +10,14 @@ using System.IO;
 using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Threading;
-using System.Net;
 using System.Diagnostics;
-using Easyman.Librarys;
 using Easyman.Librarys.ApiRequest;
 using System.Data.SqlClient;
-using System.Collections;
 using Easyman.Common;
 using RemoteAccess;
 using System.Reflection;
+using Easyman.ScriptService.BLL.Computer;
+using Oracle.ManagedDataAccess.Client;
 
 namespace Easyman.ScriptService.Script
 {
@@ -26,7 +25,7 @@ namespace Easyman.ScriptService.Script
     /// 脚本执行基类，包含了对界面自定义函数的定义与实现。
     /// 生成的脚本继承自本类
     /// </summary> 
-    public class Base: RemoteLoaderFactory, IRemoteInterface
+    public class Base : RemoteLoaderFactory, IRemoteInterface
     {
         /// <summary>
         /// 脚本节点实例ID
@@ -1437,17 +1436,13 @@ namespace Easyman.ScriptService.Script
 
         #region 文件监控
 
+        public string masterPath = Librarys.Config.BConfig.GetConfigToString("MasterPath");
+        public string filePath = Librarys.Config.BConfig.GetConfigToString("FilePath");
         public void MonitorStart(string ip, string folderName)
         {
 
-
             log(string.Format(@"开启对{0}的{1}文件夹监控...", ip, folderName));
-            string url = Librarys.Config.BConfig.GetConfigToString("MonitServiceIP");
-            string postData = string.Format("ip={0}&folderName={1}&scriptNodeCaseId={2}", ip, folderName, _scriptNodeCaseID.ToString());
-            log("参数说明:" + postData);
-            string surl = url + (postData == "" ? "" : "?") + postData;
-            log("访问路径:" + surl);
-            var mess = Request.GetHttp(url, postData);
+            var mess = MonitorStart(ip, folderName, _scriptNodeCaseID);
             if (mess.Contains("结果:false"))
             {
                 WriteErrorMessage(mess, 3);
@@ -1462,6 +1457,366 @@ namespace Easyman.ScriptService.Script
             }
 
         }
+
+        /// <summary>
+        /// 判断文件夹是都存在，不存在建立
+        /// </summary>
+        /// <param name="directory"></param>
+        public void CheckDir(string directory)
+        {
+            //如果不存在就创建file文件夹
+            if (Directory.Exists(directory) == false)
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+        }
+        public string MonitorStart(string ip, string folderName, long scriptNodeCaseId)
+        {
+            string tip = "";
+            try
+            {
+                string checkComputer = string.Format(@"select  * from fm_computer where ip='{0}'", ip);
+                DataTable dt = new DataTable();
+                DataTable dtFolder = new DataTable();
+                using (BDBHelper dbop = new BDBHelper())
+                {
+                    dt = dbop.ExecuteDataTable(checkComputer);
+                    if (dt != null && dt.Rows.Count > 0)
+                    {
+                        this.CheckDir(masterPath+"\\" + ip);
+                        string checkFolder = string.Format(@"select * from fm_folder where name='{0}' and computer_id={1}", folderName, dt.Rows[0]["ID"].ToString());
+                        dtFolder = dbop.ExecuteDataTable(checkFolder);
+                        if (dtFolder == null || dtFolder.Rows.Count == 0)
+                        {
+                            this.CheckDir(masterPath+"\\" + ip + "\\" + folderName);
+                            string insertFolder = string.Format(@"insert into fm_folder(Name,COMPUTER_ID,Is_Use) value('{0}',{1},{2})", folderName, dt.Rows[0]["ID"].ToString(), "1");
+                            dbop.ExecuteDataTable(insertFolder);
+                            dtFolder = dbop.ExecuteDataTable(checkComputer);
+                        }
+                    }
+                    else
+                    {
+                        return string.Format("结果:false;此IP({0})的终端在数据库中不存在", ip);
+                    }
+                }
+
+
+
+                string userName =  dt.Rows[0]["USER_NAME"].ToString().Trim();//lcz2016
+                string pwd =  GetDecryptPwd(dt.Rows[0]["PWD"].ToString().Trim());//lcz201314
+                string computerId = dt.Rows[0]["ID"].ToString().Trim();
+                string folderId =  dtFolder.Rows[0]["ID"].ToString().Trim();
+
+                //检测遍历后存放信息的文件是否存在
+                CheckFile(computerId, folderId);
+
+                string outMsg = "";
+                // 通过IP 用户名 密码 访问远程目录  不需要权限
+                using (SharedTool tool = new SharedTool(userName, pwd, ip))
+                {
+                    string selectPath = string.Format(@"\\{0}\{1}", ip, folderName);
+                    var dicInfo = new DirectoryInfo(selectPath);//选择的目录信息                   
+
+                    string operTime = DateTime.Now.Ticks.ToString();
+                    RecycleDir(dicInfo,ip, computerId, folderId, folderName, null, ref tip,operTime);
+
+                    //批量保存文件信息
+                    string cmdFile = string.Format(@"sqlldr userid=FMS_CL/FMS_CL control=D:/Server/Script05/Code/{0}.ctl", computerId + "_" + folderId);
+                    ExeCmd(cmdFile);
+                    string cmdPro = string.Format(@"sqlldr userid=FMS_CL/FMS_CL control=D:/Server/Script05/Code/{0}_pro.ctl", computerId + "_" + folderId);
+                    ExeCmd(cmdPro);
+                    //删除生成的文件
+                    if (File.Exists(filePath + computerId + "_" + folderId + ".txt"))
+                    {
+                        System.IO.File.Delete(filePath + computerId + "_" + folderId + ".txt");
+                    }
+                    if (File.Exists(filePath + computerId + "_" + folderId + "_pro.txt"))
+                    {
+                        System.IO.File.Delete(filePath + computerId + "_" + folderId + "_pro.txt");
+                    }
+                    outMsg = SaveFileInfo(operTime,Convert.ToInt32(folderId),Convert.ToInt32(computerId), scriptNodeCaseId);
+                    if (tip == "")
+                    {
+                        return string.Format("结果:true;监控提示:对{0}的{1}监控完成!{2};{3}", ip, folderName, tip, outMsg);
+                    }
+                    else
+                    {
+                        return string.Format("结果:warn;监控提示:对{0}的{1}监控完成!但包含预警信息:{2};{3}", ip, folderName, tip, outMsg);
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return string.Format("结果:false;监控提示:对{0}的{1}监控发生异常,{2},{3}", ip, folderName, ex.Message.ToString(), tip);
+            }
+        }
+
+
+        /// <summary>
+        /// 调用存储过程
+        /// </summary>
+        /// <param name="operTime"></param>
+        /// <param name="folderId"></param>
+        /// <param name="computerId"></param>
+        /// <param name="scriptNodeCaseId"></param>
+        /// <returns></returns>
+        private string SaveFileInfo(string operTime,int folderId,int  computerId,long scriptNodeCaseId)
+        {
+            string connString = Librarys.Config.BConfig.GetConfigToString("ConnString"); 
+            string outMsg = ExeProduce(connString, operTime, folderId, computerId, scriptNodeCaseId);
+            return outMsg;
+        }
+
+        public  string ExeProduce(string conStr, string ticks, int folderId, int computerId, long scriptNodeCaseId)
+        {
+            string outMsg = "";
+            using (OracleConnection oc = new OracleConnection(conStr))
+            {
+                try
+                {
+                    oc.Open();
+                    OracleCommand om = oc.CreateCommand();
+                    om.CommandType = CommandType.StoredProcedure;
+                    om.CommandText = "FMS_CL.PKG_MONIT_FILE.SAVE_DATA";
+                    om.Parameters.Add("CUR_TICKS", OracleDbType.Varchar2).Direction = ParameterDirection.Input;
+                    om.Parameters["CUR_TICKS"].Value = ticks;
+                    om.Parameters.Add("FOLDER_ID", OracleDbType.Decimal).Direction = ParameterDirection.Input;
+                    om.Parameters["FOLDER_ID"].Value = folderId;
+                    om.Parameters.Add("COMPUTER_ID", OracleDbType.Decimal).Direction = ParameterDirection.Input;
+                    om.Parameters["COMPUTER_ID"].Value = computerId;
+                    om.Parameters.Add("SCRIPT_NODE_CASE_ID", OracleDbType.Decimal).Direction = ParameterDirection.Input;
+                    om.Parameters["SCRIPT_NODE_CASE_ID"].Value = scriptNodeCaseId;
+                    om.Parameters.Add("OUT_MSG", OracleDbType.Varchar2, 500).Direction = ParameterDirection.Output;
+
+                    om.ExecuteNonQuery();
+                    outMsg = om.Parameters[4].Value.ToString();
+                    oc.Close();
+                }
+                catch (Exception ex)
+                {
+                    outMsg = ex.Message.ToString();
+                    throw ex;
+                }
+                finally
+                {
+                    if (oc != null) oc.Close();
+                }
+
+            }
+            return outMsg;
+
+        }
+        private void CheckFile(string computerId, string folderId)
+        {
+            if (File.Exists(filePath + computerId + "_" + folderId + ".txt"))
+            {
+                System.IO.File.Delete(filePath + computerId + "_" + folderId + ".txt");
+            }
+            if (File.Exists(filePath + computerId + "_" + folderId + "_pro.txt"))
+            {
+                System.IO.File.Delete(filePath + computerId + "_" + folderId + "_pro.txt");
+            }
+
+            if (!File.Exists(filePath + computerId + "_" + folderId + ".ctl"))
+            {
+                // 创建文件
+                FileStream fs = new FileStream(filePath + computerId + "_" + folderId + ".ctl", FileMode.OpenOrCreate, FileAccess.ReadWrite); //可以指定盘符，也可以指定任意文件名，还可以为word等文件
+                StreamWriter sw = new StreamWriter(fs); // 创建写入流
+                sw.WriteLine("Load data");
+                sw.WriteLine("Characterset UTF8");
+                sw.WriteLine(string.Format("Infile '{0}.txt'", filePath + computerId + "_" + folderId));
+                sw.WriteLine(string.Format("Append into table {0}", "FM_MONIT_FILE_TEMP"));
+                sw.WriteLine("fields terminated by \",\"");
+                sw.WriteLine("Optionally enclosed by '\"\"'");
+                sw.WriteLine("Trailing nullcols");
+                sw.WriteLine("(ID, PARENT_ID,COMPUTER_ID,FOLDER_ID,FILE_NAME,IS_DIR,FORMAT_NAME,CLIENT_PATH,SERVER_PATH,MD5,SIZES,IS_HIDE,TICKS)");
+                sw.Close(); //关闭文件
+            }
+            if (!File.Exists(filePath + computerId + "_" + folderId + "_pro.ctl"))
+            {
+                // 创建文件
+                FileStream fs = new FileStream(filePath + computerId + "_" + folderId + "_pro.ctl", FileMode.OpenOrCreate, FileAccess.ReadWrite); //可以指定盘符，也可以指定任意文件名，还可以为word等文件
+                StreamWriter sw = new StreamWriter(fs); // 创建写入流
+                sw.WriteLine("Load data");
+                sw.WriteLine("Characterset UTF8");
+                sw.WriteLine(string.Format(@"Infile '{0}_pro.txt'", filePath + computerId + "_" + folderId));
+                sw.WriteLine(string.Format("Append into table {0}", "FM_MONIT_FILE_TEMP_PRO"));
+                sw.WriteLine("fields terminated by \",\"");
+                sw.WriteLine("Optionally enclosed by '\"\"'");
+                sw.WriteLine("Trailing nullcols");
+                sw.WriteLine("(ID, MD5,PNAME,PVALUE,TICKS)");
+                sw.Close(); //关闭文件
+            }
+        }
+
+        public void RecycleDir(DirectoryInfo directory,string ip, string computerId, string folderId, string folderName, string pguid, ref string mess,string operTime)
+        {
+            string filterName = MonitConst.RestoreStr;
+            string filterDataBase = MonitConst.DataBaseStr;
+            List<MonitInfo> waitFiles = new List<MonitInfo>();
+            List<FileProperty> waitPros = new List<FileProperty>();
+           
+            //获取当前目录下的的文件    
+            FileInfo[] textFiles = directory.GetFiles("*.*", SearchOption.TopDirectoryOnly);
+            foreach (FileInfo temp in textFiles)
+            {
+                if (!temp.FullName.Contains(filterName) && !temp.FullName.Contains(filterDataBase))
+                {
+                    int ishide = 0;
+                    if ((temp.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+                    {
+                        ishide = 1;
+                    }
+                    MonitInfo _monitInfo = InitMonitInfoSec(directory.FullName.ToString() + "\\" + temp, 0, temp.Name, temp.FullName, temp.Extension, pguid,ip, computerId, folderId, folderName, temp.Length, operTime, ishide);
+                    waitFiles.Add(_monitInfo);
+                    DataToFile(waitFiles, filePath, computerId + "_" + folderId);
+                    waitFiles.Clear();
+                }
+            }
+          //  DataToFile(waitFiles, filePath, computerId + "_" + folderId);
+           // waitFiles.Clear();
+            //获取当前目录下的文件夹
+            DirectoryInfo[] dic = directory.GetDirectories("*.*", SearchOption.TopDirectoryOnly);
+            foreach (DirectoryInfo temp in dic)
+            {
+                if (!temp.FullName.Contains(filterName) && !temp.FullName.Contains(filterDataBase))
+                {
+                    int ishide = 0;
+                    if ((temp.Attributes & FileAttributes.Hidden) == FileAttributes.Hidden)
+                    {
+                        ishide = 1;
+                    }
+                    else
+                    {
+                        ishide = 0;
+                    }
+                    MonitInfo _monitInfo = InitMonitInfoSec(directory.FullName.ToString(), 1, temp.Name, temp.FullName, temp.Extension, pguid,ip, computerId, folderId, folderName, 0, operTime, ishide);
+                    //写入文件
+                    waitFiles.Add(_monitInfo);
+                    DataToFile(waitFiles, filePath, computerId + "_" + folderId);
+                    waitFiles.Clear();
+                    try
+                    {
+                        this.RecycleDir(temp,ip, computerId, folderId, folderName, _monitInfo.monitFile.Id, ref mess,operTime);
+                    }
+                    catch (Exception ex)
+                    {
+                        mess += temp.FullName + ":" + ex.Message + ";";
+                    }
+                }
+            }
+        }
+
+
+        private MonitInfo InitMonitInfoSec(string filePath, int isDir, string fileName, string fullName, string fileFormat, string pguid,string ip, string computerId, string folderId, string folderName, long fLength, string operTime, int ishide)
+        {
+            MonitInfo _monitInfo = new MonitInfo();
+            MonitFile _monitFile = new MonitFile();
+            _monitFile.Id = Guid.NewGuid().ToString();
+            _monitFile.ParentId = pguid;
+            _monitFile.ComputerId = Convert.ToInt32(computerId);
+            _monitFile.FolderId = Convert.ToInt32(folderId);
+            _monitFile.FileName = fileName;
+            _monitFile.IsDir = isDir;
+            _monitFile.FormatName = fileFormat;
+            _monitFile.ClientPath = fullName;
+            _monitFile.Sizes = fLength;
+            _monitFile.IsHide = ishide;
+            _monitFile.Ticks = operTime;
+            if (isDir == 1)
+            {
+                _monitFile.MD5 = fullName;
+                _monitFile.ServerPath = masterPath+"\\" + ip + "\\" + folderName + "\\" + fileName;
+                _monitInfo.filePros = FileTool.GetDictionaryByDir(_monitFile.Id, _monitFile.Ticks, _monitFile.MD5, fullName);
+            }
+            else
+            {
+                //获取文件的MD5值，进行5次尝试 (自我生成的MD5)
+                _monitFile.MD5 = GetFileMD5(filePath);
+                if (_monitFile.MD5 != "")
+                {
+                    _monitFile.ServerPath = masterPath+"\\" + ip + "\\" + folderName + "\\" + _monitFile.MD5 + fileFormat;
+                }
+                _monitInfo.filePros = FileTool.GetProperties(_monitFile.Id, _monitFile.Ticks, _monitFile.MD5, fullName);
+            }
+
+            _monitInfo.monitFile = _monitFile;
+
+            return _monitInfo;
+        }
+
+
+
+        private string GetFileMD5(string filePath)
+        {
+            string md5 = "";
+            for (int i = 0; i < 5; i++)
+            {
+                try
+                {
+                    md5 = FileTool.GetFileMd5(filePath);
+                }
+                catch (Exception ex)
+                {
+                }
+                if (md5 != null && md5 != "")
+                {
+                    break;
+                }
+
+            }
+            return md5;
+        }
+
+
+        /// <summary>
+        /// 以数据流的模式把表数据生成到文件中
+        /// </summary>
+        /// <param name="strsql"></param>
+        /// <param name="filePath"></param>
+        private void DataToFile(List<MonitInfo> waitFiles, string rootPath, string com_folderid)
+        {
+            try
+            {
+                string filePath = rootPath + com_folderid + ".txt";
+                using (FileStream stream = new FileStream(filePath, FileMode.Append))
+                {
+                    StreamWriter sw = new StreamWriter(stream); // 创建写入流
+                    foreach (MonitInfo info in waitFiles)
+                    {
+                        MonitFile mf = info.monitFile;
+                        string fileStr = string.Format(@"{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}", mf.Id, mf.ParentId, mf.ComputerId.ToString(), mf.FolderId.ToString(), mf.FileName, mf.IsDir.ToString(), mf.FormatName, mf.ClientPath, mf.ServerPath, mf.MD5, mf.Sizes.ToString(), mf.IsHide.ToString(), mf.Ticks);
+                        sw.WriteLine(fileStr);
+                    }
+                    sw.Close();
+                    stream.Close();
+                }
+                string fileProPath = rootPath + com_folderid + "_pro.txt";
+                using (FileStream stream = new FileStream(fileProPath, FileMode.Append))
+                {
+                    StreamWriter sw = new StreamWriter(stream); // 创建写入流
+                    foreach (MonitInfo info in waitFiles)
+                    {
+                        foreach (FileProperty pro in info.filePros)
+                        {
+                            string proStr = string.Format(@"{0},{1},{2},{3},{4}", pro.Id, pro.MD5, pro.PName, pro.PValue, pro.Ticks);
+                            sw.WriteLine(proStr);
+                        }
+                    }
+                    sw.Close();
+                    stream.Close();
+                }
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+        }
+
         #endregion
 
         #region 数据库操作
@@ -1497,20 +1852,20 @@ namespace Easyman.ScriptService.Script
                 StreamReader reader = p.StandardOutput;//截取输出流
 
                 string line = reader.ReadLine();//每次读取一行
-                StringBuilder logBat = new StringBuilder();
+                string logBat ="";
                 while (!reader.EndOfStream)
                 {
                     line = reader.ReadLine();
                     if (line != "")
                     {
-                        logBat.AppendLine(line);
+                        logBat=line;
                     }
 
                 }
 
                 p.WaitForExit();//启用则以同步方式执行命令
                 p.Close();
-                log("执行结果:" + logBat.ToString());
+                log("执行结果:执行成功!"+ logBat.ToString());
                 return true;
             }
             catch (Exception ex)
@@ -1643,7 +1998,7 @@ namespace Easyman.ScriptService.Script
         {
             try
             {
-                
+
                 //log("调用[" + kv.K + "],ip[" + kv.V + "]");
                 //if (kv != null && kv.K > 0)
                 //{
@@ -1651,7 +2006,7 @@ namespace Easyman.ScriptService.Script
                 //}
 
                 //lcz 这里是把同一个ip下的5个文件传到方法里统一拷贝
-                if (_monitList!=null&&_monitList.Count > 0)
+                if (_monitList != null && _monitList.Count > 0)
                 {
                     log("从内存中获得随机多条文件信息【" + string.Join(",", _monitList) + "】");
 
@@ -1905,8 +2260,8 @@ namespace Easyman.ScriptService.Script
                     string pwd = GetDecryptPwd(dt.Rows[0]["PWD"].ToString());
                     using (SharedTool tool = new SharedTool(dt.Rows[0]["USER_NAME"].ToString(), pwd, dt.Rows[0]["IP"].ToString()))
                     {
-                        log("文件路径" + fromPath);
-                        log("文件路径" + toPath);
+                        //  log("文件路径" + fromPath);
+                        // log("文件路径" + toPath);
                         //if (File.Exists(@fromPath))
                         //{
                         //File.Copy(fromPath, toPath, true);//从客户端拷贝文件到服务端(覆盖式拷贝)
@@ -1970,7 +2325,7 @@ namespace Easyman.ScriptService.Script
                 //}
                 #endregion
 
-             //   log("获得监控文件编号【" + string.Join(",", kvLs.Select(p => p.K)) + "】,ip【"+ kvLs[0].V + "】开始进行拷贝");
+                //   log("获得监控文件编号【" + string.Join(",", kvLs.Select(p => p.K)) + "】,ip【"+ kvLs[0].V + "】开始进行拷贝");
                 string sql = string.Format(@"SELECT A.SERVER_PATH,A.ID,
                        A.CLIENT_PATH,
                        A.FILE_LIBRARY_ID,
@@ -2001,12 +2356,12 @@ namespace Easyman.ScriptService.Script
                             string fromPath = dt.Rows[i]["CLIENT_PATH"].ToString();
 
 
-                            log("文件客户端路径:" + fromPath+ ";文件服务端路径:"+ toPath);
+                            log("文件客户端路径:" + fromPath + ";文件服务端路径:" + toPath);
 
                             //var kv = kvLs[i];
                             try
                             {
-                                if(!File.Exists(toPath))//是否已拷贝（否）
+                                if (!File.Exists(toPath))//是否已拷贝（否）
                                 {
                                     Request.CopyFile(fromPath, toPath, 1024 * 1024 * 5);
                                     //log("监控文件编号【" + kv.K + "】拷贝成功。");
@@ -2078,7 +2433,7 @@ namespace Easyman.ScriptService.Script
                                 WriteWarnMessage(result, 2);
                                 using (BDBHelper dbop = new BDBHelper())
                                 {
-                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS={0},COPY_STATUS_TIME=sysdate where id= {1}",copyStatus, dt.Rows[i]["ID"].ToString()));
+                                    dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS={0},COPY_STATUS_TIME=sysdate where id= {1}", copyStatus, dt.Rows[i]["ID"].ToString()));
                                 }
                             }
                         }
@@ -2187,7 +2542,7 @@ namespace Easyman.ScriptService.Script
             }
             else
             {
-                log(string.Format(@"生成文件的遍历结果:{0}",mess));
+                log(string.Format(@"生成文件的遍历结果:{0}", mess));
             }
 
         }
