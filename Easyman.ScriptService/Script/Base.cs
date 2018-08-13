@@ -1490,9 +1490,9 @@ namespace Easyman.ScriptService.Script
                         if (dtFolder == null || dtFolder.Rows.Count == 0)
                         {
                             this.CheckDir(masterPath+"\\" + ip + "\\" + folderName);
-                            string insertFolder = string.Format(@"insert into fm_folder(Name,COMPUTER_ID,Is_Use) value('{0}',{1},{2})", folderName, dt.Rows[0]["ID"].ToString(), "1");
+                            string insertFolder = string.Format(@"insert into fm_folder(Name,COMPUTER_ID,Is_Use,CREATE_TIME) values('{0}',{1},{2},SYSDATE)", folderName, dt.Rows[0]["ID"].ToString(), "1");
                             dbop.ExecuteDataTable(insertFolder);
-                            dtFolder = dbop.ExecuteDataTable(checkComputer);
+                            dtFolder = dbop.ExecuteDataTable(checkFolder);
                         }
                     }
                     else
