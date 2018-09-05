@@ -1438,6 +1438,7 @@ namespace Easyman.ScriptService.Script
 
         public string masterPath = Librarys.Config.BConfig.GetConfigToString("MasterPath");
         public string filePath = Librarys.Config.BConfig.GetConfigToString("FilePath");
+        public string filePath2 = Librarys.Config.BConfig.GetConfigToString("FilePath2");
         public void MonitorStart(string ip, string folderName)
         {
 
@@ -1521,10 +1522,11 @@ namespace Easyman.ScriptService.Script
                     string operTime = DateTime.Now.Ticks.ToString();
                     RecycleDir(dicInfo,ip, computerId, folderId, folderName, null, ref tip,operTime);
 
+                    
                     //批量保存文件信息
-                    string cmdFile = string.Format(@"sqlldr userid=FMS_CL/FMS_CL control=D:/Server/Script05/Code/{0}.ctl", computerId + "_" + folderId);
+                    string cmdFile = string.Format(@"sqlldr userid=FMS_CL/FMS_CL control={1}/{0}.ctl", computerId + "_" + folderId, filePath2);
                     ExeCmd(cmdFile);
-                    string cmdPro = string.Format(@"sqlldr userid=FMS_CL/FMS_CL control=D:/Server/Script05/Code/{0}_pro.ctl", computerId + "_" + folderId);
+                    string cmdPro = string.Format(@"sqlldr userid=FMS_CL/FMS_CL control={1}/{0}_pro.ctl", computerId + "_" + folderId, filePath2);
                     ExeCmd(cmdPro);
                     //删除生成的文件
                     if (File.Exists(filePath + computerId + "_" + folderId + ".txt"))
@@ -1628,10 +1630,10 @@ namespace Easyman.ScriptService.Script
                 sw.WriteLine("Characterset UTF8");
                 sw.WriteLine(string.Format("Infile '{0}.txt'", filePath + computerId + "_" + folderId));
                 sw.WriteLine(string.Format("Append into table {0}", "FM_MONIT_FILE_TEMP"));
-                sw.WriteLine("fields terminated by \",\"");
+                sw.WriteLine("fields terminated by \"&\"");
                 sw.WriteLine("Optionally enclosed by '\"\"'");
                 sw.WriteLine("Trailing nullcols");
-                sw.WriteLine("(ID, PARENT_ID,COMPUTER_ID,FOLDER_ID,FILE_NAME,IS_DIR,FORMAT_NAME,CLIENT_PATH,SERVER_PATH,MD5,SIZES,IS_HIDE,TICKS)");
+                sw.WriteLine("(ID, PARENT_ID,COMPUTER_ID,FOLDER_ID,FILE_NAME,IS_DIR,FORMAT_NAME,CLIENT_PATH CHAR(4000),SERVER_PATH,MD5,SIZES,IS_HIDE,TICKS)");
                 sw.Close(); //关闭文件
             }
             if (!File.Exists(filePath + computerId + "_" + folderId + "_pro.ctl"))
@@ -1643,10 +1645,10 @@ namespace Easyman.ScriptService.Script
                 sw.WriteLine("Characterset UTF8");
                 sw.WriteLine(string.Format(@"Infile '{0}_pro.txt'", filePath + computerId + "_" + folderId));
                 sw.WriteLine(string.Format("Append into table {0}", "FM_MONIT_FILE_TEMP_PRO"));
-                sw.WriteLine("fields terminated by \",\"");
+                sw.WriteLine("fields terminated by \"&\"");
                 sw.WriteLine("Optionally enclosed by '\"\"'");
                 sw.WriteLine("Trailing nullcols");
-                sw.WriteLine("(ID, MD5,PNAME,PVALUE,TICKS)");
+                sw.WriteLine("(ID, MD5,PNAME,PVALUE CHAR(4000),TICKS)");
                 sw.Close(); //关闭文件
             }
         }
@@ -1787,7 +1789,7 @@ namespace Easyman.ScriptService.Script
                     foreach (MonitInfo info in waitFiles)
                     {
                         MonitFile mf = info.monitFile;
-                        string fileStr = string.Format(@"{0},{1},{2},{3},{4},{5},{6},{7},{8},{9},{10},{11},{12}", mf.Id, mf.ParentId, mf.ComputerId.ToString(), mf.FolderId.ToString(), mf.FileName, mf.IsDir.ToString(), mf.FormatName, mf.ClientPath, mf.ServerPath, mf.MD5, mf.Sizes.ToString(), mf.IsHide.ToString(), mf.Ticks);
+                        string fileStr = string.Format(@"{0}&{1}&{2}&{3}&{4}&{5}&{6}&{7}&{8}&{9}&{10}&{11}&{12}", mf.Id, mf.ParentId, mf.ComputerId.ToString(), mf.FolderId.ToString(), mf.FileName, mf.IsDir.ToString(), mf.FormatName, mf.ClientPath, mf.ServerPath, mf.MD5, mf.Sizes.ToString(), mf.IsHide.ToString(), mf.Ticks);
                         sw.WriteLine(fileStr);
                     }
                     sw.Close();
@@ -1801,7 +1803,7 @@ namespace Easyman.ScriptService.Script
                     {
                         foreach (FileProperty pro in info.filePros)
                         {
-                            string proStr = string.Format(@"{0},{1},{2},{3},{4}", pro.Id, pro.MD5, pro.PName, pro.PValue, pro.Ticks);
+                            string proStr = string.Format(@"{0}&{1}&{2}&{3}&{4}", pro.Id, pro.MD5, pro.PName, pro.PValue, pro.Ticks);
                             sw.WriteLine(proStr);
                         }
                     }
