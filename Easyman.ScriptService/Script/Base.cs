@@ -1630,7 +1630,8 @@ namespace Easyman.ScriptService.Script
                 sw.WriteLine("Characterset UTF8");
                 sw.WriteLine(string.Format("Infile '{0}.txt'", filePath + computerId + "_" + folderId));
                 sw.WriteLine(string.Format("Append into table {0}", "FM_MONIT_FILE_TEMP"));
-                sw.WriteLine("fields terminated by \"&\"");
+                //sw.WriteLine("fields terminated by \"&\"");
+                sw.WriteLine("fields terminated by \"|\"");
                 sw.WriteLine("Optionally enclosed by '\"\"'");
                 sw.WriteLine("Trailing nullcols");
                 sw.WriteLine("(ID, PARENT_ID,COMPUTER_ID,FOLDER_ID,FILE_NAME,IS_DIR,FORMAT_NAME,CLIENT_PATH CHAR(4000),SERVER_PATH,MD5,SIZES,IS_HIDE,TICKS)");
@@ -1645,7 +1646,8 @@ namespace Easyman.ScriptService.Script
                 sw.WriteLine("Characterset UTF8");
                 sw.WriteLine(string.Format(@"Infile '{0}_pro.txt'", filePath + computerId + "_" + folderId));
                 sw.WriteLine(string.Format("Append into table {0}", "FM_MONIT_FILE_TEMP_PRO"));
-                sw.WriteLine("fields terminated by \"&\"");
+                //sw.WriteLine("fields terminated by \"&\"");
+                sw.WriteLine("fields terminated by \"|\"");
                 sw.WriteLine("Optionally enclosed by '\"\"'");
                 sw.WriteLine("Trailing nullcols");
                 sw.WriteLine("(ID, MD5,PNAME,PVALUE CHAR(4000),TICKS)");
@@ -1789,7 +1791,8 @@ namespace Easyman.ScriptService.Script
                     foreach (MonitInfo info in waitFiles)
                     {
                         MonitFile mf = info.monitFile;
-                        string fileStr = string.Format(@"{0}&{1}&{2}&{3}&{4}&{5}&{6}&{7}&{8}&{9}&{10}&{11}&{12}", mf.Id, mf.ParentId, mf.ComputerId.ToString(), mf.FolderId.ToString(), mf.FileName, mf.IsDir.ToString(), mf.FormatName, mf.ClientPath, mf.ServerPath, mf.MD5, mf.Sizes.ToString(), mf.IsHide.ToString(), mf.Ticks);
+                        //string fileStr = string.Format(@"{0}&{1}&{2}&{3}&{4}&{5}&{6}&{7}&{8}&{9}&{10}&{11}&{12}", mf.Id, mf.ParentId, mf.ComputerId.ToString(), mf.FolderId.ToString(), mf.FileName, mf.IsDir.ToString(), mf.FormatName, mf.ClientPath, mf.ServerPath, mf.MD5, mf.Sizes.ToString(), mf.IsHide.ToString(), mf.Ticks);
+                        string fileStr = string.Format(@"{0}|{1}|{2}|{3}|{4}|{5}|{6}|{7}|{8}|{9}|{10}|{11}|{12}", mf.Id, mf.ParentId, mf.ComputerId.ToString(), mf.FolderId.ToString(), mf.FileName, mf.IsDir.ToString(), mf.FormatName, mf.ClientPath, mf.ServerPath, mf.MD5, mf.Sizes.ToString(), mf.IsHide.ToString(), mf.Ticks);
                         sw.WriteLine(fileStr);
                     }
                     sw.Close();
@@ -1803,7 +1806,8 @@ namespace Easyman.ScriptService.Script
                     {
                         foreach (FileProperty pro in info.filePros)
                         {
-                            string proStr = string.Format(@"{0}&{1}&{2}&{3}&{4}", pro.Id, pro.MD5, pro.PName, pro.PValue, pro.Ticks);
+                            //string proStr = string.Format(@"{0}&{1}&{2}&{3}&{4}", pro.Id, pro.MD5, pro.PName, pro.PValue, pro.Ticks);
+                            string proStr = string.Format(@"{0}|{1}|{2}|{3}|{4}", pro.Id, pro.MD5, pro.PName, pro.PValue, pro.Ticks);
                             sw.WriteLine(proStr);
                         }
                     }
