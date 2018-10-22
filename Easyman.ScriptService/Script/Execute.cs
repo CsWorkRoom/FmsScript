@@ -158,8 +158,9 @@ namespace Easyman.ScriptService.Script
 
         public static bool NewRun(string code, BLL.EM_SCRIPT_NODE_CASE.Entity nodeCase, List<KV> monitList, ref ErrorInfo err)
         {
+            
             //动态编译
-            string dllName = NewCompilerClass(code, ref err);
+            string dllName = NewCompilerClass(code, nodeCase.SCRIPT_NODE_ID.ToString() ,ref err);
             if (string.IsNullOrEmpty(dllName))
             {
                 BLL.EM_SCRIPT_NODE_CASE_LOG.Instance.Add(nodeCase.ID, 3, "节点脚本编译失败：\r\n" + err.Message, code);
@@ -177,7 +178,7 @@ namespace Easyman.ScriptService.Script
         /// <param name="code"></param>
         /// <param name="err"></param>
         /// <returns></returns>
-        private static string NewCompilerClass(string code, ref ErrorInfo err)
+        private static string NewCompilerClass(string code,string nodeId ,ref ErrorInfo err)
         {
             string assemblyName = "";
             string pathServer = AppDomain.CurrentDomain.BaseDirectory + "Easyman.ScriptService.exe";
@@ -201,7 +202,7 @@ namespace Easyman.ScriptService.Script
             using (CSharpCodeProvider objCSharpCodePrivoder = new CSharpCodeProvider())
             {
                 //生成程序集名(动态)
-                string assemblyNameTemp = AppDomain.CurrentDomain.BaseDirectory + "dlls\\DynamicalCode_" + DateTime.Now.Ticks + ".dll";
+                string assemblyNameTemp = AppDomain.CurrentDomain.BaseDirectory + "dlls\\DynamicalCode_"+ nodeId + "_" + DateTime.Now.Ticks + ".dll";
 
                 //ICodeCompiler objICodeCompiler = objCSharpCodePrivoder.CreateCompiler();
                 CompilerParameters objCompilerParameters = new CompilerParameters();
