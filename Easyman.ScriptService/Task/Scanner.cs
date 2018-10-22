@@ -206,18 +206,21 @@ namespace Easyman.ScriptService.Task
 
                                 if (string.IsNullOrEmpty(curIp))
                                 {
+                                    BLog.Write(BLog.LogLevel.INFO, "文件编号:" + dt.Rows[i][0] + "为空");
                                     //log("ip[" + curIp + "]为空");//20180701注释
                                     //BLog.Write(BLog.LogLevel.INFO, "ip[" + curIp + "]为空");
                                 }
                                 else if (hasAliveIps.Contains(curIp))
                                 {
-                                    //global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });//20180701注释
+                                    BLog.Write(BLog.LogLevel.INFO, "文件编号:" + dt.Rows[i][0] + "IP在线");
+                                    global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });//20180701注释
                                     //log("ip[" + curIp + "]在已在线列表中");
                                 }
                                 else
                                 {
                                     if (ipNotLists.Exists(p => p.K == curKv.K))
                                     {
+                                        BLog.Write(BLog.LogLevel.INFO, "文件编号:" + dt.Rows[i][0] + "IP不在线");
                                         //log("ip[" + curIp + "]未在线2");
                                         using (BDBHelper dbop = new BDBHelper())
                                         {
@@ -229,6 +232,7 @@ namespace Easyman.ScriptService.Task
                                     }
                                     else if (!Request.PingIP(curIp))
                                     {
+                                        BLog.Write(BLog.LogLevel.INFO, "文件编号2:" + dt.Rows[i][0] + "IP不在线");
                                         //log("ip[" + curIp + "]未在线");
                                         using (BDBHelper dbop = new BDBHelper())
                                         {
@@ -246,6 +250,7 @@ namespace Easyman.ScriptService.Task
                                     {
                                         global.OpMonitKVList("add", new KV { K = Convert.ToInt64(dt.Rows[i][0].ToString()), V = dt.Rows[i][1].ToString() });
                                         hasAliveIps.Add(curIp);
+                                        BLog.Write(BLog.LogLevel.INFO, "文件编号:" + dt.Rows[i][0] + "添加文件");
                                         //log("ip[" + curIp + "]在线");
                                         //BLog.Write(BLog.LogLevel.INFO, "ip[" + curIp + "]在线");//20180701注释
                                     }
