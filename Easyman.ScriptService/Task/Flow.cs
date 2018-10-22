@@ -51,6 +51,8 @@ namespace Easyman.ScriptService.Task
                     BLog.Write(BLog.LogLevel.INFO, "1输出未在线的ip：" + string.Join(",", ipNotLists.Select(p => p.V)));
 
                     int effectCount = global.GetEffectMonitKVCount();
+                    List<KV> kvs = global.OpMonitKVList("getall");
+                    WriteLog(0, BLog.LogLevel.INFO, string.Format("输出内存在写入的拷贝文件数：" + kvs.Count));
                     WriteLog(0, BLog.LogLevel.INFO, string.Format("输出有效的待拷贝文件数：" + effectCount));
                     if (effectCount > 0)
                     { }
