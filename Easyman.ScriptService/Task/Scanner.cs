@@ -333,7 +333,7 @@ namespace Easyman.ScriptService.Task
                         int difCount = Main.MaxMonitCount - Convert.ToInt32(obj);//差量
                         sql = string.Format(@"SELECT COUNT(1)
                                 FROM (SELECT A.ID,
-                                            ROW_NUMBER () OVER (PARTITION BY TRUNC (ID) ORDER BY ID) RN
+                                            ROW_NUMBER () OVER (ORDER BY ID) RN
                                         FROM EM_SCRIPT_CASE A WHERE RUN_STATUS = 1)
                                 WHERE RN <= {0}", difCount);
                         object o2 = null;
@@ -348,7 +348,7 @@ namespace Easyman.ScriptService.Task
                                      USING (SELECT ID
                                               FROM (SELECT ID,
                                                            ROW_NUMBER ()
-                                                              OVER (PARTITION BY TRUNC (ID) ORDER BY ID)
+                                                              OVER ( ORDER BY ID)
                                                               RN
                                                       FROM EM_SCRIPT_CASE
                                                      WHERE RUN_STATUS = 1)
