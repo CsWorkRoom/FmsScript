@@ -28,27 +28,45 @@ namespace Easyman.ScriptService.BLL.Computer
             {
                 throw new FileNotFoundException("指定的文件不存在。", filePath);
             }
-            FileInfo info = new FileInfo(filePath);
+            FileInfo dicInfo = new FileInfo(filePath);
             
             //Dictionary<string, string> Properties = new Dictionary<string, string>();
             List<FileProperty> pros = new List<FileProperty>();
-           
-            PropertyInfo[] propertys = info.GetType().GetProperties();
-            foreach (PropertyInfo item in propertys)
-            {
-                object svalue = item.GetValue(info, null);//用pi.GetValue获得值
-                string tvalue = svalue != null ? svalue.ToString() : "";
-              //  Properties.Add(item.Name, tvalue);
 
-                FileProperty pro = new FileProperty();
-                pro.Id = mid;
-                pro.MD5 = md5;
-                pro.PName = item.Name;
-                pro.PValue = tvalue;
-                pro.Ticks = ticks;
-                pros.Add(pro);
-            }
-           
+            #region 原有属性获取方式
+            //PropertyInfo[] propertys = info.GetType().GetProperties();
+            //foreach (PropertyInfo item in propertys)
+            //{
+            //    object svalue = item.GetValue(info, null);//用pi.GetValue获得值
+            //    string tvalue = svalue != null ? svalue.ToString() : "";
+            //  //  Properties.Add(item.Name, tvalue);
+
+            //    FileProperty pro = new FileProperty();
+            //    pro.Id = mid;
+            //    pro.MD5 = md5;
+            //    pro.PName = item.Name;
+            //    pro.PValue = tvalue;
+            //    pro.Ticks = ticks;
+            //    pros.Add(pro);
+            //}
+            #endregion
+
+            #region 现有属性获取方式
+            FileProperty pro1 = GetEntity(mid, ticks, md5, "Attributes", dicInfo.Attributes.ToString());
+            pros.Add(pro1);
+            FileProperty pro2 = GetEntity(mid, ticks, md5, "Name", dicInfo.Name.ToString());
+            pros.Add(pro2);
+            FileProperty pro3 = GetEntity(mid, ticks, md5, "Directory", dicInfo.Directory.ToString());
+            pros.Add(pro3);
+            FileProperty pro4 = GetEntity(mid, ticks, md5, "LastAccessTime", dicInfo.LastAccessTime.ToString());
+            pros.Add(pro4);
+            FileProperty pro5 = GetEntity(mid, ticks, md5, "LastWriteTime", dicInfo.LastWriteTime.ToString());
+            pros.Add(pro5);
+            FileProperty pro6 = GetEntity(mid, ticks, md5, "Length", dicInfo.Length.ToString());
+            pros.Add(pro6);
+            FileProperty pro7 = GetEntity(mid, ticks, md5, "CreationTime", dicInfo.CreationTime.ToString());
+            pros.Add(pro7);
+            #endregion
             return pros;
         }
         ///// <summary>
@@ -147,14 +165,14 @@ namespace Easyman.ScriptService.BLL.Computer
             pros.Add(pro1);
             FileProperty pro2 = GetEntity(mid, ticks, md5, "FullName", dicInfo.FullName.ToString());
             pros.Add(pro2);
-            FileProperty pro3 = GetEntity(mid, ticks, md5, "LastAccessTime", dicInfo.LastAccessTime.ToString());
-            pros.Add(pro3);
+            //FileProperty pro3 = GetEntity(mid, ticks, md5, "LastAccessTime", dicInfo.LastAccessTime.ToString());
+            //pros.Add(pro3);
             FileProperty pro4 = GetEntity(mid, ticks, md5, "LastWriteTime", dicInfo.LastWriteTime.ToString());
             pros.Add(pro4);
             FileProperty pro5 = GetEntity(mid, ticks, md5, "Name", dicInfo.Name.ToString());
             pros.Add(pro5);
-            FileProperty pro6 = GetEntity(mid, ticks, md5, "Root", dicInfo.Root.ToString());
-            pros.Add(pro6);
+            //FileProperty pro6 = GetEntity(mid, ticks, md5, "Root", dicInfo.Root.ToString());
+            //pros.Add(pro6);
             return pros;
         }
 
