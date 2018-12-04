@@ -210,6 +210,7 @@ namespace Easyman.ScriptService.Task
                                 string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=5 where id in({0})", string.Join(",", dt.AsEnumerable().Select(r => r["ID"]).Distinct().ToArray()).TrimEnd(','));
                                 dbop.ExecuteNonQuery(updateSql);
                             }
+                            dbop.Close();
                         }
                         //log("查询出的数量为：【" + dt.Rows.Count + "】");
                         BLog.Write(BLog.LogLevel.INFO, "查询出的数量为：【" + dt.Rows.Count + "】");
@@ -325,26 +326,23 @@ namespace Easyman.ScriptService.Task
                     using (BDBHelper dbop = new BDBHelper())
                     {
                         obj = dbop.ExecuteScalar(sql);//获得执行中的非并行任务数
-                    }
-                    BLog.Write(BLog.LogLevel.INFO, "获取到执行中任务数：" + obj);
 
-                    if (obj != null && Convert.ToInt32(obj) < Main.MaxMonitCount)//当执行中的数量小于MaxMonitCount
-                    {
-                        int difCount = Main.MaxMonitCount - Convert.ToInt32(obj);//差量
-                        sql = string.Format(@"SELECT COUNT(1)
+                        BLog.Write(BLog.LogLevel.INFO, "获取到执行中任务数：" + obj);
+
+                        if (obj != null && Convert.ToInt32(obj) < Main.MaxMonitCount)//当执行中的数量小于MaxMonitCount
+                        {
+                            int difCount = Main.MaxMonitCount - Convert.ToInt32(obj);//差量
+                            sql = string.Format(@"SELECT COUNT(1)
                                 FROM (SELECT A.ID,
                                             ROW_NUMBER () OVER (ORDER BY ID) RN
                                         FROM EM_SCRIPT_CASE A WHERE RUN_STATUS = 1)
                                 WHERE RN <= {0}", difCount);
-                        object o2 = null;
-                        using (BDBHelper dbop = new BDBHelper())
-                        {
-                            o2 = dbop.ExecuteScalar(sql);
-                        }
-                        BLog.Write(BLog.LogLevel.INFO, "按差量获取等待中任务数：" + o2);
-                        if (o2 != null && Convert.ToInt32(o2) > 0)
-                        {
-                            sql = string.Format(@"MERGE INTO EM_SCRIPT_CASE A
+                            object o2 = o2 = dbop.ExecuteScalar(sql);
+
+                            BLog.Write(BLog.LogLevel.INFO, "按差量获取等待中任务数：" + o2);
+                            if (o2 != null && Convert.ToInt32(o2) > 0)
+                            {
+                                sql = string.Format(@"MERGE INTO EM_SCRIPT_CASE A
                                      USING (SELECT ID
                                               FROM (SELECT ID,
                                                            ROW_NUMBER ()
@@ -358,12 +356,11 @@ namespace Easyman.ScriptService.Task
                                 THEN
                                    UPDATE SET RUN_STATUS = 2", difCount);
 
-                            using (BDBHelper dbop = new BDBHelper())
-                            {
                                 dbop.ExecuteNonQuery(sql);//修改等待的任务为执行中
+                                BLog.Write(BLog.LogLevel.INFO, "执行把等待中任务改为执行中");
                             }
-                            BLog.Write(BLog.LogLevel.INFO, "执行把等待中任务改为执行中");
                         }
+                        dbop.Close();//关闭连接
                     }
                     #endregion
 

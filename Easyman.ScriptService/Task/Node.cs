@@ -367,6 +367,7 @@ namespace Easyman.ScriptService.Task
                     string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=5 where id in({0})", string.Join(",", dt.AsEnumerable().Select(r => r["ID"]).Distinct().ToArray()).TrimEnd(','));
                     dbop.ExecuteNonQuery(updateSql);
                 }
+                dbop.Close();
             }
             log("查询出的数量为：【" + dt.Rows.Count + "】");
             if (dt != null && dt.Rows.Count > 0)
