@@ -131,6 +131,7 @@ namespace Easyman.ScriptService.BLL
                     }
                     //提交事务
                     dbHelper.CommitTrans();
+                    dbHelper.Close();
                 }
             }
 

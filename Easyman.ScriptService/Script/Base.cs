@@ -1500,6 +1500,7 @@ namespace Easyman.ScriptService.Script
                     {
                         return string.Format("结果:false;此IP({0})的终端在数据库中不存在", ip);
                     }
+                    dbop.Close();
                 }
 
 
@@ -2346,6 +2347,7 @@ namespace Easyman.ScriptService.Script
                 using (BDBHelper dbop = new BDBHelper())
                 {
                     dt = dbop.ExecuteDataTable(sql);
+                    dbop.Close();
                 }
                 if (dt != null && dt.Rows.Count > 0)
                 {
@@ -2388,6 +2390,7 @@ namespace Easyman.ScriptService.Script
                                     //dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=1,COPY_STATUS_TIME=sysdate where MD5='{0}' and COPY_STATUS!=1", dt.Rows[i]["MD5"].ToString()));
                                     //dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where id={0}", dt.Rows[i]["FILE_LIBRARY_ID"].ToString()));
                                     dbop.ExecuteNonQuery(string.Format(@"update FM_FILE_LIBRARY set IS_COPY=1 where MD5='{0}'", dt.Rows[i]["MD5"].ToString()));
+                                    dbop.Close();
                                 }
                             }
                             catch (Exception ex)
@@ -2441,6 +2444,7 @@ namespace Easyman.ScriptService.Script
                                 using (BDBHelper dbop = new BDBHelper())
                                 {
                                     dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS={0},COPY_STATUS_TIME=sysdate where id= {1}", copyStatus, dt.Rows[i]["ID"].ToString()));
+                                    dbop.Close();
                                 }
                             }
                         }

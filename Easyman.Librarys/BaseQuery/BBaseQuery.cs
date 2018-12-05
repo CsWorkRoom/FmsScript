@@ -354,6 +354,7 @@ namespace Easyman.Librarys.BaseQuery
                     {
                         Cache.BCache.Remove(CacheKey);
                     }
+                    dbHelper.Close();
                 }
             }
             catch (Exception ex)

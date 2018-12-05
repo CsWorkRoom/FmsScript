@@ -262,13 +262,13 @@ namespace Easyman.ScriptService.Task
 
             WriteLog(scriptCaseID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】添加了任务实例【{1}】，将为它创建节点实例的各项配置。", scriptID, scriptCaseID));
 
-            //创建节点流位置实例
-            int pCount = BLL.EM_NODE_POSITION_FORCASE.Instance.Add(scriptCaseID, BLL.EM_NODE_POSITION.Instance.GetListByScriptID(scriptID));
-            WriteLog(scriptCaseID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】的实例【{1}】成功创建节点位置实例，共有【{2}】个节点位置信息，用于前台页面显示。", scriptID, scriptCaseID, pCount));
+            ////创建节点流位置实例
+            //int pCount = BLL.EM_NODE_POSITION_FORCASE.Instance.Add(scriptCaseID, BLL.EM_NODE_POSITION.Instance.GetListByScriptID(scriptID));
+            //WriteLog(scriptCaseID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】的实例【{1}】成功创建节点位置实例，共有【{2}】个节点位置信息，用于前台页面显示。", scriptID, scriptCaseID, pCount));
 
-            //创建节点流连线实例
-            int cCount = BLL.EM_CONNECT_LINE_FORCASE.Instance.Add(scriptCaseID, BLL.EM_CONNECT_LINE.Instance.GetListByScriptID(scriptID));
-            WriteLog(scriptCaseID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】的实例【{1}】成功创建节点连线实例，共有【{2}】个节点连线信息，用于前台页面显示。", scriptID, scriptCaseID, cCount));
+            ////创建节点流连线实例
+            //int cCount = BLL.EM_CONNECT_LINE_FORCASE.Instance.Add(scriptCaseID, BLL.EM_CONNECT_LINE.Instance.GetListByScriptID(scriptID));
+            //WriteLog(scriptCaseID, BLog.LogLevel.DEBUG, string.Format("脚本流【{0}】的实例【{1}】成功创建节点连线实例，共有【{2}】个节点连线信息，用于前台页面显示。", scriptID, scriptCaseID, cCount));
 
             //创建节点流配置实例
             List<long> nodeList = BLL.EM_SCRIPT_REF_NODE_FORCASE.Instance.AddReturnNodeIDList(scriptID, scriptCaseID);
@@ -309,11 +309,11 @@ namespace Easyman.ScriptService.Task
             BLog.Write(level, message);
             try
             {
-                //写数据库表
-                if (scriptCaseID > 0)
-                {
-                    BLL.EM_SCRIPT_CASE_LOG.Instance.Add(scriptCaseID, level.GetHashCode(), message, sql);
-                }
+                ////写数据库表
+                //if (scriptCaseID > 0)
+                //{
+                //    BLL.EM_SCRIPT_CASE_LOG.Instance.Add(scriptCaseID, level.GetHashCode(), message, sql);
+                //}
             }
             catch (Exception ex)
             {
