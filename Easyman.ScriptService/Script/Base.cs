@@ -253,6 +253,8 @@ namespace Easyman.ScriptService.Script
                 using (BDBHelper dbHelper = new BDBHelper(_dbServer.DB_TYPE, _dbServer.IP, _dbServer.PORT, _dbServer.USER, _dbServer.PASSWORD, _dbServer.DATA_CASE, _dbServer.DATA_CASE))
                 {
                     dbHelper.ExecuteNonQuery(sql);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
                 log("执行成功！", sql);
             }

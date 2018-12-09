@@ -187,6 +187,7 @@ namespace Easyman.ScriptService
                 using (BDBHelper dbop = new BDBHelper())
                 {
                     dbop.ExecuteNonQuery(string.Format(@"update FM_MONIT_FILE set COPY_STATUS=0 where COPY_STATUS= 5"));
+                    dbop.Close();//主动关闭
                 }
                 #endregion
 
@@ -195,6 +196,7 @@ namespace Easyman.ScriptService
                 {
                     dbop.ExecuteNonQuery(string.Format(@"truncate table  FM_MONIT_FILE_TEMP"));
                     dbop.ExecuteNonQuery(string.Format(@"truncate table  FM_MONIT_FILE_TEMP_PRO"));
+                    dbop.Close();//主动关闭
                 }
                 #endregion
 

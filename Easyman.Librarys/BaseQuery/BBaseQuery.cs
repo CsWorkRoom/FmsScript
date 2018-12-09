@@ -154,6 +154,8 @@ namespace Easyman.Librarys.BaseQuery
                                 dbHelper.RollbackTrans();
                             }
                         }
+                        //2018/12/8添加
+                        dbHelper.Close();//主动关闭连接
                     }
                 }
                 catch (Exception ex)
@@ -174,6 +176,8 @@ namespace Easyman.Librarys.BaseQuery
                         {
                             Cache.BCache.Remove(CacheKey);
                         }
+                        //2018/12/8添加
+                        dbHelper.Close();//主动关闭连接
                     }
                 }
                 catch (Exception ex)
@@ -354,7 +358,8 @@ namespace Easyman.Librarys.BaseQuery
                     {
                         Cache.BCache.Remove(CacheKey);
                     }
-                    dbHelper.Close();
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -439,6 +444,8 @@ namespace Easyman.Librarys.BaseQuery
                     {
                         Cache.BCache.Remove(CacheKey);
                     }
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -465,6 +472,8 @@ namespace Easyman.Librarys.BaseQuery
                     {
                         Cache.BCache.Remove(CacheKey);
                     }
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -490,6 +499,8 @@ namespace Easyman.Librarys.BaseQuery
                     {
                         Cache.BCache.Remove(CacheKey);
                     }
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -512,6 +523,8 @@ namespace Easyman.Librarys.BaseQuery
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
                     dbHelper.Drop(TableName + TableNameSuffix);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -532,11 +545,14 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns></returns>
         public int GetNextValueFromSeq()
         {
+            int result = 0;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.GetNextValueFromSeq(TableName + "_SEQ");
+                    result = dbHelper.GetNextValueFromSeq(TableName + "_SEQ");
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -544,7 +560,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "GetMaxID439读取表" + ItemName + TableName + TableNameSuffix + "自增序列出错\t" + ex.ToString());
             }
 
-            return 0;
+            return result;
         }
 
         #endregion
@@ -558,12 +574,15 @@ namespace Easyman.Librarys.BaseQuery
         public int GetMaxKeyID()
         {
             string sql = "SELECT MAX(" + KeyField + ") FROM " + TableName + TableNameSuffix;
+            int result = 0;
 
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return Convert.ToInt32(dbHelper.ExecuteScalarInt(sql));
+                    result = Convert.ToInt32(dbHelper.ExecuteScalarInt(sql));
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -571,7 +590,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "GetMaxID439读取表" + ItemName + TableName + TableNameSuffix + "最大ID出错\t" + ex.ToString());
             }
 
-            return 0;
+            return result;
         }
 
         /// <summary>
@@ -592,12 +611,14 @@ namespace Easyman.Librarys.BaseQuery
         public int GetCount(string where, params object[] values)
         {
             string sql = "SELECT COUNT(*) FROM " + TableName + TableNameSuffix + " WHERE " + where;
-
+            int result = 0;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return Convert.ToInt32(dbHelper.ExecuteScalarIntParams(sql, values));
+                    result = Convert.ToInt32(dbHelper.ExecuteScalarIntParams(sql, values));
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -605,7 +626,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "GetCount473读取表" + ItemName + TableName + TableNameSuffix + "记录条数出错\t" + ex.ToString());
             }
 
-            return 0;
+            return result;
         }
 
         /// <summary>
@@ -722,6 +743,8 @@ namespace Easyman.Librarys.BaseQuery
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
                     dt = dbHelper.ExecuteDataTableParams(sql, values);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -747,6 +770,8 @@ namespace Easyman.Librarys.BaseQuery
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
                     dt = dbHelper.ExecuteDataTable(sql);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -774,6 +799,8 @@ namespace Easyman.Librarys.BaseQuery
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
                     dt = dbHelper.ExecuteDataTableParams(sql, values);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -801,6 +828,8 @@ namespace Easyman.Librarys.BaseQuery
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
                     dt = dbHelper.ExecuteDataTablePage(sql, pageSize, pageIndex);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -830,6 +859,8 @@ namespace Easyman.Librarys.BaseQuery
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
                     dt = dbHelper.ExecuteDataTablePageParams(sql, pageSize, pageIndex, values);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -885,11 +916,14 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns></returns>
         public DataTable GetTablePage(int pageSize, int pageIndex, string where, params object[] values)
         {
+            DataTable dt = null;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.ExecuteDataTablePageParams("SELECT * FROM " + TableName + TableNameSuffix + " WHERE " + where + (string.IsNullOrEmpty(OrderbyFields) ? "" : (" ORDER BY " + OrderbyFields)), pageSize, pageIndex, values);
+                    dt = dbHelper.ExecuteDataTablePageParams("SELECT * FROM " + TableName + TableNameSuffix + " WHERE " + where + (string.IsNullOrEmpty(OrderbyFields) ? "" : (" ORDER BY " + OrderbyFields)), pageSize, pageIndex, values);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -897,7 +931,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "GetTablePage722分页查询表" + ItemName + TableName + TableNameSuffix + "数据出错\t" + ex.ToString());
             }
 
-            return null;
+            return dt;
         }
 
         /// <summary>
@@ -934,11 +968,14 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns></returns>
         public DataRow GetRowFields(string fields, string where, params object[] values)
         {
+            DataRow dr = null;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.ExecuteDataRowParams("SELECT " + fields + " FROM " + TableName + TableNameSuffix + " WHERE " + where, values);
+                    dr = dbHelper.ExecuteDataRowParams("SELECT " + fields + " FROM " + TableName + TableNameSuffix + " WHERE " + where, values);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -946,7 +983,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "GetRowFields759读取表" + ItemName + TableName + TableNameSuffix + "记录出错\t" + ex.ToString());
             }
 
-            return null;
+            return dr;
         }
 
         /// <summary>
@@ -968,12 +1005,15 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns></returns>
         public DataRow GetRowByKey(object keyValue)
         {
+            DataRow dr = null;
             string sql = "SELECT * FROM " + TableName + TableNameSuffix + " WHERE " + KeyField + "=?";
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.ExecuteDataRowParams(sql, keyValue);
+                    dr = dbHelper.ExecuteDataRowParams(sql, keyValue);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -981,7 +1021,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "GetRowByKey793读取表" + ItemName + TableName + TableNameSuffix + "键为[" + keyValue + "]行出错\t" + ex.ToString());
             }
 
-            return null;
+            return dr;
         }
 
         /// <summary>
@@ -1111,13 +1151,16 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns></returns>
         public bool IsDuplicate(object keyValue, string fieldName, string value)
         {
+            bool result = true;
             try
             {
                 string sql = "SELECT COUNT(*) FROM " + TableName + TableNameSuffix + " WHERE " + KeyField + "<>? AND " + fieldName + "=?";
 
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return Convert.ToInt32(dbHelper.ExecuteScalarIntParams(sql, keyValue, value)) > 0;
+                    result = (Convert.ToInt32(dbHelper.ExecuteScalarIntParams(sql, keyValue, value)) > 0);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -1125,7 +1168,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "IsDuplicate936验证表" + ItemName + TableName + TableNameSuffix + "值重复性出错\t" + ex.ToString());
             }
 
-            return true;
+            return result;
         }
 
         #endregion
@@ -1306,11 +1349,14 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns>导入记录条数</returns>
         public int LoadDataInLocalFile(string fileName, bool isReplace = false)
         {
+            int result = 0;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.LoadDataInLocalFile(TableName + TableNameSuffix, fileName, isReplace);
+                    result = dbHelper.LoadDataInLocalFile(TableName + TableNameSuffix, fileName, isReplace);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -1318,7 +1364,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "LoadDataInLocalFile1097从文件" + fileName + "导入表" + ItemName + TableName + TableNameSuffix + "记录出错\t" + ex.ToString());
             }
 
-            return 0;
+            return result;
         }
 
         /// <summary>
@@ -1330,11 +1376,14 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns>导入记录条数</returns>
         public int LoadDataInLocalFile(string fileName, List<string> fields, bool isReplace = false)
         {
+            int result = 0;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.LoadDataInLocalFile(TableName + TableNameSuffix, fileName, fields, isReplace);
+                    result = dbHelper.LoadDataInLocalFile(TableName + TableNameSuffix, fileName, fields, isReplace);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -1342,7 +1391,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "LoadDataInLocalFile1121从文件" + fileName + "导入表" + ItemName + TableName + TableNameSuffix + "记录出错\t" + ex.ToString());
             }
 
-            return 0;
+            return result;
         }
 
         /// <summary>
@@ -1354,11 +1403,14 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns>导入记录条数</returns>
         public int LoadDataInLocalFile(string fileName, string fieldsTerminated, bool isReplace = false)
         {
+            int result = 0;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.LoadDataInLocalFile(TableName + TableNameSuffix, fileName, fieldsTerminated, isReplace);
+                    result = dbHelper.LoadDataInLocalFile(TableName + TableNameSuffix, fileName, fieldsTerminated, isReplace);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -1366,7 +1418,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "LoadDataInLocalFile1145从文件" + fileName + "导入表" + ItemName + TableName + TableNameSuffix + "记录出错\t" + ex.ToString());
             }
 
-            return 0;
+            return result;
         }
 
         /// <summary>
@@ -1379,11 +1431,14 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns>导入记录条数</returns>
         public int LoadDataInLocalFile(string fileName, List<string> fields, string fieldsTerminated, bool isReplace = false)
         {
+            int result = 0;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.LoadDataInLocalFile(TableName + TableNameSuffix, fileName, fields, fieldsTerminated, isReplace);
+                    result = dbHelper.LoadDataInLocalFile(TableName + TableNameSuffix, fileName, fields, fieldsTerminated, isReplace);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -1391,7 +1446,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "LoadDataInLocalFile1170从文件" + fileName + "导入表" + ItemName + TableName + TableNameSuffix + "记录出错\t" + ex.ToString());
             }
 
-            return 0;
+            return result;
         }
 
         /// <summary>
@@ -1405,11 +1460,14 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns>导入记录条数</returns>
         public int LoadDataInLocalFile(string fileName, List<string> fields, string fieldsTerminated, string linesTerminated, bool isReplace = false)
         {
+            int result = 0;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.LoadDataInLocalFile(TableName + TableNameSuffix, fileName, fields, fieldsTerminated, linesTerminated, isReplace);
+                    result = dbHelper.LoadDataInLocalFile(TableName + TableNameSuffix, fileName, fields, fieldsTerminated, linesTerminated, isReplace);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -1417,7 +1475,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "LoadDataInLocalFile1196从文件" + fileName + "导入表" + ItemName + TableName + TableNameSuffix + "记录出错\t" + ex.ToString());
             }
 
-            return 0;
+            return result;
         }
 
         #endregion
@@ -1431,11 +1489,14 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns></returns>
         public int LoadDataInDataTable(DataTable dt)
         {
+            int result = 0;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.LoadDataInDataTable(TableName + TableNameSuffix, dt);
+                    result = dbHelper.LoadDataInDataTable(TableName + TableNameSuffix, dt);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -1443,7 +1504,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "LoadDataInDataTable1222从DataTable导入表" + ItemName + TableName + TableNameSuffix + "记录出错\t" + ex.ToString());
             }
 
-            return 0;
+            return result;
         }
 
         /// <summary>
@@ -1453,11 +1514,14 @@ namespace Easyman.Librarys.BaseQuery
         /// <returns>导入数据的条数</returns>
         public int LoadDataInList(List<Dictionary<string, object>> list)
         {
+            int result = 0;
             try
             {
                 using (DBHelper.BDBHelper dbHelper = new DBHelper.BDBHelper())
                 {
-                    return dbHelper.LoadDataInList(TableName + TableNameSuffix, list);
+                    result = dbHelper.LoadDataInList(TableName + TableNameSuffix, list);
+                    //2018/12/8添加
+                    dbHelper.Close();//主动关闭连接
                 }
             }
             catch (Exception ex)
@@ -1465,7 +1529,7 @@ namespace Easyman.Librarys.BaseQuery
                 BLog.Write(BLog.LogLevel.ERROR, "LoadDataInList1244从List导入表" + ItemName + TableName + TableNameSuffix + "记录出错\t" + ex.ToString());
             }
 
-            return 0;
+            return result;
         }
 
         /// <summary>

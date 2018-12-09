@@ -248,6 +248,7 @@ namespace Easyman.ScriptService.Task
                                         {
                                             string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=0 where id ={0}", dt.Rows[i][0].ToString());
                                             dbop.ExecuteNonQuery(updateSql);
+                                            dbop.Close();
                                         }
                                         if (!notAliveList.Contains(curKv.V))
                                             notAliveList.Add(curKv.V);
@@ -260,6 +261,7 @@ namespace Easyman.ScriptService.Task
                                         {
                                             string updateSql = string.Format(@"update FM_MONIT_FILE set COPY_STATUS=0 where id ={0}", dt.Rows[i][0].ToString());
                                             dbop.ExecuteNonQuery(updateSql);
+                                            dbop.Close();
                                         }
                                         global.OpIpNotList("add", curKv);
                                         notAliveList.Add(dt.Rows[i][1].ToString());
