@@ -1569,6 +1569,7 @@ namespace Easyman.ScriptService.Script
         /// <returns></returns>
         private string SaveFileInfo(string operTime,int folderId,int  computerId,long scriptNodeCaseId)
         {
+            log(string.Format(@"调用数据库存储过程,进行文件结构存储"));
             string connString = Librarys.Config.BConfig.GetConfigToString("ConnString"); 
             string outMsg = ExeProduce(connString, operTime, folderId, computerId, scriptNodeCaseId);
             return outMsg;
