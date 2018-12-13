@@ -133,6 +133,15 @@ namespace Easyman.ScriptService.BLL
         }
 
         /// <summary>
+        /// 获取所有非停止状态的脚本流实例的ID列表
+        /// </summary>
+        /// <returns></returns>
+        public IList<Entity> GetNotStopCaseList()
+        {
+            return GetList<Entity>("RUN_STATUS<>?", Enums.RunStatus.Stop.GetHashCode());
+        }
+
+        /// <summary>
         /// 获取所有待执行及执行中脚本流实例的ID列表(并行任务)
         /// </summary>
         /// <returns></returns>

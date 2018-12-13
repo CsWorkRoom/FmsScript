@@ -407,8 +407,8 @@ namespace Easyman.ScriptService.Task
                     WriteLog(scriptCaseID, BLog.LogLevel.ERROR, "扫描并添加待执行节点出现未知错误，错误信息为：" + ex.ToString());
                 }
 
-                //Thread.Sleep(3000);
-                Thread.Sleep(500);
+                Thread.Sleep(3000);
+                //Thread.Sleep(500);
             }
         }
 
@@ -422,7 +422,7 @@ namespace Easyman.ScriptService.Task
         /// <returns></returns>
         private static bool AddAndRunNode(long scriptID, long scriptCaseID, int maxTryTimes, ref ErrorInfo err)
         {
-            //已添加的节点实例
+            //已添加的节点实例 
             Dictionary<long, BLL.EM_SCRIPT_NODE_CASE.Entity> nodeCaseList = BLL.EM_SCRIPT_NODE_CASE.Instance.GetDictionaryByScriptCaseID(scriptCaseID);
             //已添加的节点ID
             Dictionary<long, bool> dicExecutedNodeID = new Dictionary<long, bool>();
@@ -430,21 +430,24 @@ namespace Easyman.ScriptService.Task
             Enums.ReturnCode returnCode = Enums.ReturnCode.Success;
             //脚本流实例是否已经完成
             bool isComplete = true;
-            //运行中的节点数
-            int runningCount = 0;
-            //启动之前未完成的节点
+            //运行中的节点数 2018/12/13 注释
+            //int runningCount = 0;
+            //启动之前未完成的节点 
+            #region  2018/12/13 处理（取消了对执行中的脚本判断或重启）
             foreach (var kvp in nodeCaseList)
             {
                 if (kvp.Value.RUN_STATUS != (short)Enums.RunStatus.Stop)
                 {
                     isComplete = false;
-                    Node node = new Node(kvp.Value.ID, maxTryTimes);
-                    bool isStarted = node.Start(true);
-                    if (isStarted == true)
-                    {
-                        WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】之前未完成的实例【{3}】已经重新启动。", scriptID, scriptCaseID, kvp.Value.SCRIPT_NODE_ID, kvp.Value.ID));
-                        runningCount++;
-                    }
+                    #region 2018/12/13 注释
+                    //Node node = new Node(kvp.Value.ID, maxTryTimes);
+                    //bool isStarted = node.Start(true);
+                    //if (isStarted == true)
+                    //{
+                    //    WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】的实例【{1}】中的节点【{2}】之前未完成的实例【{3}】已经重新启动。", scriptID, scriptCaseID, kvp.Value.SCRIPT_NODE_ID, kvp.Value.ID));
+                    //    runningCount++;
+                    //}
+                    #endregion
                 }
                 else if (kvp.Value.RUN_STATUS == (short)Enums.RunStatus.Stop)
                 {
@@ -466,10 +469,12 @@ namespace Easyman.ScriptService.Task
                 }
             }
 
-            if (runningCount > 0)
-            {
-                WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】的实例【{1}】启动了【{2}】个之前未完成的节点实例。", scriptID, scriptCaseID, runningCount));
-            }
+            // 2018/12/13 注释
+            //if (runningCount > 0)
+            //{
+            //    WriteLog(scriptCaseID, BLog.LogLevel.INFO, string.Format("脚本流【{0}】的实例【{1}】启动了【{2}】个之前未完成的节点实例。", scriptID, scriptCaseID, runningCount));
+            //}
+            #endregion
 
             //所有节点及依赖关系
             Dictionary<long, List<long>> dicAllNodes = BLL.EM_SCRIPT_REF_NODE_FORCASE.Instance.GetNodeAndParents(scriptCaseID);

@@ -161,26 +161,26 @@ namespace Easyman.ScriptService
                 _bw.DoWork += bw_DoWork;
                 _bw.RunWorkerAsync();
 
-                #region 并行：停止遗留的(等待+执行中)任务组
-                var supCaseList = BLL.EM_SCRIPT_CASE.Instance.GetRunningSuperveneCaseList();
+                #region 并行+非并行：停止遗留的(等待+执行中)任务组 （2018/12/13，与非并行的处理合并）
+                var supCaseList = BLL.EM_SCRIPT_CASE.Instance.GetNotStopCaseList();
                 if (supCaseList != null && supCaseList.Count > 0)
                 {
                     foreach (var sc in supCaseList)
                     {
-                        BLL.EM_SCRIPT_CASE.Instance.SetStop(sc.ID, Enums.ReturnCode.Success);
+                        BLL.EM_SCRIPT_CASE.Instance.SetStop(sc.ID, Enums.ReturnCode.Warn);//标记停止的为警告状态
                     }
                 }
                 #endregion
 
-                #region 非并行：停止等待中的任务组
-                var noSupCaseList = BLL.EM_SCRIPT_CASE.Instance.GetRunningNoSuperveneCaseList();
-                if (noSupCaseList != null && noSupCaseList.Count > 0)
-                {
-                    foreach (var sc in noSupCaseList)
-                    {
-                        BLL.EM_SCRIPT_CASE.Instance.SetStop(sc.ID, Enums.ReturnCode.Success);
-                    }
-                }
+                #region 作废： 非并行：停止等待中的任务组 （2018/12/13注释，与以上并行的处理合并）
+                //var noSupCaseList = BLL.EM_SCRIPT_CASE.Instance.GetRunningNoSuperveneCaseList();
+                //if (noSupCaseList != null && noSupCaseList.Count > 0)
+                //{
+                //    foreach (var sc in noSupCaseList)
+                //    {
+                //        BLL.EM_SCRIPT_CASE.Instance.SetStop(sc.ID, Enums.ReturnCode.Success);
+                //    }
+                //}
                 #endregion
 
                 #region 5回复为0
